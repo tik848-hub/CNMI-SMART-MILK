@@ -76,7 +76,8 @@ input:focus,select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 
     <div class="header-title">Smart Neonatal Milk Safety System</div>
     <div class="header-sub">หน่วยโภชนาการ — รพ.รามาธิบดีจักรีนฤบดินทร์</div>
   </div>
-  <div class="header-right">
+  <div class="header-right" style="display:flex;gap:8px;align-items:center">
+    <button class="btn btn-ghost btn-sm no-print" onclick="syncFromSheets()">🔄 ซิงก์จาก Sheets</button>
     <a href="index.html" class="btn btn-ghost btn-sm no-print" style="text-decoration:none">🏥 หน้า NICU</a>
   </div>
 </header>
@@ -122,8 +123,16 @@ input:focus,select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 
 
 <script>
 var GAS_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+
 function getOrders() { try { return JSON.parse(localStorage.getItem('milkOrders_v2')||'[]'); } catch(e){ return []; } }
-function saveOrders(orders) { try { localStorage.setItem('milkOrders_v2', JSON.stringify(orders)); } catch(e){} }
+function saveOrders(o) { try { localStorage.setItem('milkOrders_v2', JSON.stringify(o)); } catch(e){} }
+
+function gasGet(params) {
+  return fetch(GAS_URL + '?' + new URLSearchParams(params).toString(), { redirect: 'follow' })
+    .then(function(r){ return r.json(); }).catch(function(e){ return {ok:false,error:String(e)}; });
+}
+function gasPost(body) { return gasGet(body); }
+
 function toast(msg, type) {
   var el = document.getElementById('toast');
   el.textContent = msg;
@@ -131,6 +140,7 @@ function toast(msg, type) {
   el.classList.add('show');
   setTimeout(function(){ el.classList.remove('show'); }, 3000);
 }
+
 function showPane(name) {
   document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -140,32 +150,80 @@ function showPane(name) {
   if (name === 'overview') loadOverview();
   if (name === 'produce') loadProduce();
 }
+
 function getTodayStr() { return new Date().toISOString().slice(0,10); }
+
+// ── Sync from Google Sheets ─────────────────────
+function syncFromSheets() {
+  var today = getTodayStr();
+  Promise.all([
+    gasGet({ action:'getOrders', date:today }),
+    gasGet({ action:'getOrderLines' })
+  ]).then(function(res) {
+    var oRes = res[0], lRes = res[1];
+    if (!oRes.ok || !oRes.data || !oRes.data.length) return;
+    var lineMap = {};
+    if (lRes.ok && lRes.data) {
+      lRes.data.forEach(function(l) {
+        var gid = l.OrderGroupId||l.orderGroupId;
+        if (!lineMap[gid]) lineMap[gid] = [];
+        var ct = []; try { ct = JSON.parse(l.CustomTimes||'[]'); } catch(e){}
+        lineMap[gid].push({ milkType:l.MilkType||'', formula:l.Formula||'',
+          volume:l.VolumePerFeed||'', feeds:l.Feeds||'', route:l.Route||'',
+          totalPerBottle:l.TotalPerBottle||null, customTimes:ct });
+      });
+    }
+    var merged = oRes.data
+      .filter(function(o){ return (o.Status||o.status) !== 'DELETED'; })
+      .map(function(o) {
+        var gid = o.OrderGroupId||o.orderGroupId;
+        return { orderGroupId:gid, hn:o.HN||o.hn||'', fullName:o.FullName||o.fullName||'',
+          bedNo:o.BedNo||o.bedNo||'', orderDate:today,
+          lines:lineMap[gid]||[], mouthCare:o.MouthCare||'N',
+          mouthCareFreq:o.MouthCareFreq||'', breastFeeding:o.BreastFeeding||'N',
+          note:o.Note||o.note||'', orderedBy:o.OrderedBy||'',
+          status:o.Status||o.status||'PENDING' };
+      });
+    // merge: keep produced status locally if sheets says approved
+    var local = getOrders();
+    var localMap = {};
+    local.forEach(function(o){ localMap[o.orderGroupId]=o.status; });
+    merged.forEach(function(o){
+      if (localMap[o.orderGroupId] === 'PRODUCED') o.status = 'PRODUCED';
+    });
+    saveOrders(merged);
+    loadOverview(); loadProduce();
+    toast('🔄 ซิงก์จาก Google Sheets แล้ว','success');
+  }).catch(function(){});
+}
+
 function loadOverview() {
   var orders = getOrders();
   var today = getTodayStr();
   var todayOrders = orders.filter(function(o){ return o.orderDate === today && (o.status === 'APPROVED' || o.status === 'PRODUCED'); });
-  var ap = todayOrders.filter(function(o){ return o.status === 'APPROVED'; }).length;
-  var pr = todayOrders.filter(function(o){ return o.status === 'PRODUCED'; }).length;
-  document.getElementById('stat-approved').textContent = ap;
-  document.getElementById('stat-produced').textContent = pr;
+  document.getElementById('stat-approved').textContent = todayOrders.filter(function(o){ return o.status === 'APPROVED'; }).length;
+  document.getElementById('stat-produced').textContent = todayOrders.filter(function(o){ return o.status === 'PRODUCED'; }).length;
   document.getElementById('stat-total').textContent = todayOrders.length;
   var el = document.getElementById('overview-list');
   if (!todayOrders.length) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีคำสั่งอนุมัติ</div>'; return; }
   el.innerHTML = todayOrders.map(function(o){
     var linesHTML = o.lines.map(function(l, i){
-      var totalVol = parseFloat(l.volume) * parseInt(l.feeds);
-      return '<div class="prod-line">' +
-        '<span class="line-tag">รายการ '+(i+1)+'</span>' +
-        '<div style="flex:1"><div><span class="prod-lbl">ชนิดนม:</span><b>' + l.milkType + '</b></div>' +
-        '<div><span class="prod-lbl">สูตร:</span><span class="prod-val">' + (l.formula||'—') + '</span></div>' +
-        '<div><span class="prod-lbl">ปริมาณ:</span><b>' + l.volume + ' ml × ' + l.feeds + ' มื้อ = ' + totalVol + ' ml/วัน</b></div>' +
-        '<div><span class="prod-lbl">Route:</span>' + l.route + (l.totalPerBottle ? ' <span style="color:var(--orange);font-weight:600">(รวม '+l.totalPerBottle+' ml/ขวด)</span>' : '') + '</div></div></div>';
+      var totalVol = parseFloat(l.volume||0) * parseInt(l.feeds||0);
+      return '<div class="prod-line"><span class="line-tag">รายการ '+(i+1)+'</span>' +
+        '<div style="flex:1"><div><span class="prod-lbl">ชนิดนม:</span><b>'+l.milkType+'</b></div>' +
+        '<div><span class="prod-lbl">สูตร:</span><span class="prod-val">'+(l.formula||'—')+'</span></div>' +
+        '<div><span class="prod-lbl">ปริมาณ:</span><b>'+l.volume+' ml × '+l.feeds+' มื้อ = '+totalVol+' ml/วัน</b></div>' +
+        '<div><span class="prod-lbl">Route:</span>'+l.route+(l.totalPerBottle?' <span style="color:var(--orange);font-weight:600">(รวม '+l.totalPerBottle+' ml/ขวด)</span>':'')+
+        (l.customTimes&&l.customTimes.length?' <span style="font-size:11px;color:var(--gray-600)">เวลา: '+l.customTimes.join(', ')+'</span>':'')+'</div></div></div>';
     }).join('');
-    var statusBadge = o.status === 'PRODUCED' ? '<span class="badge badge-produced">✅ ผลิตแล้ว</span>' : '<span class="badge badge-pending">⏳ รอผลิต</span>';
-    return '<div class="prod-group"><div class="prod-group-header"><span>👶 ' + o.fullName + ' | HN: ' + o.hn + ' | เตียง: ' + o.bedNo + '</span>' + statusBadge + '</div><div class="prod-group-body">' + linesHTML + (o.mouthCare==='Y'?'<div class="prod-line"><span class="prod-lbl">Mouth care:</span>0.2 ml นมแม่ '+(o.mouthCareFreq||'q3h')+'</div>':'') + (o.note?'<div class="prod-line"><span class="prod-lbl">หมายเหตุ:</span>'+o.note+'</div>':'') + '</div></div>';
+    var sb = o.status==='PRODUCED'?'<span class="badge badge-produced">✅ ผลิตแล้ว</span>':'<span class="badge badge-pending">⏳ รอผลิต</span>';
+    return '<div class="prod-group"><div class="prod-group-header"><span>👶 '+o.fullName+' | HN: '+o.hn+' | เตียง: '+o.bedNo+'</span>'+sb+'</div>' +
+      '<div class="prod-group-body">'+linesHTML+
+      (o.mouthCare==='Y'?'<div class="prod-line"><span class="prod-lbl">Mouth care:</span>0.2 ml นมแม่ '+(o.mouthCareFreq||'q3h')+'</div>':'')+
+      (o.note?'<div class="prod-line"><span class="prod-lbl">หมายเหตุ:</span>'+o.note+'</div>':'')+'</div></div>';
   }).join('');
 }
+
 function loadProduce() {
   var orders = getOrders();
   var today = getTodayStr();
@@ -174,17 +232,21 @@ function loadProduce() {
   if (!pending.length) { el.innerHTML = '<div class="card" style="text-align:center;color:var(--green);padding:20px;font-weight:600">✅ ไม่มีคำสั่งรอผลิต</div>'; return; }
   el.innerHTML = pending.map(function(o){
     var linesHTML = o.lines.map(function(l, i){
-      var totalVol = parseFloat(l.volume) * parseInt(l.feeds);
-      return '<div class="prod-line">' +
-        '<span class="line-tag">รายการ '+(i+1)+'</span>' +
-        '<div style="flex:1"><div><b>' + l.milkType + '</b></div>' +
-        '<div style="word-break:break-word;line-height:1.5">' + (l.formula||'—') + '</div>' +
-        '<div><b>' + l.volume + ' ml × ' + l.feeds + ' มื้อ = ' + totalVol + ' ml/วัน</b></div>' +
-        '<div>Route: ' + l.route + (l.totalPerBottle ? ' <b style="color:var(--orange)">(รวม '+l.totalPerBottle+' ml/ขวด)</b>' : '') + '</div></div></div>';
+      var totalVol = parseFloat(l.volume||0) * parseInt(l.feeds||0);
+      return '<div class="prod-line"><span class="line-tag">รายการ '+(i+1)+'</span>' +
+        '<div style="flex:1"><div><b>'+l.milkType+'</b></div>' +
+        '<div style="word-break:break-word;line-height:1.5">'+(l.formula||'—')+'</div>' +
+        '<div><b>'+l.volume+' ml × '+l.feeds+' มื้อ = '+totalVol+' ml/วัน</b></div>' +
+        '<div>Route: '+l.route+(l.totalPerBottle?' <b style="color:var(--orange)">(รวม '+l.totalPerBottle+' ml/ขวด)</b>':'')+
+        (l.customTimes&&l.customTimes.length?' | ⏰ '+l.customTimes.join(', '):'')+'</div></div></div>';
     }).join('');
-    return '<div class="prod-group"><div class="prod-group-header"><span>👶 ' + o.fullName + ' | HN: ' + o.hn + ' | ' + o.bedNo + '</span><span class="badge badge-pending">⏳ รอผลิต</span></div><div class="prod-group-body">' + linesHTML + (o.note?'<div class="prod-line"><span class="prod-lbl">หมายเหตุ:</span>'+o.note+'</div>':'') + '<div style="margin-top:10px"><button class="btn btn-success btn-sm" onclick="confirmProduce(\'' + o.orderGroupId + '\')">✅ ยืนยันผลิตนมแล้ว</button></div></div></div>';
+    return '<div class="prod-group"><div class="prod-group-header"><span>👶 '+o.fullName+' | HN: '+o.hn+' | '+o.bedNo+'</span><span class="badge badge-pending">⏳ รอผลิต</span></div>' +
+      '<div class="prod-group-body">'+linesHTML+
+      (o.note?'<div class="prod-line"><span class="prod-lbl">หมายเหตุ:</span>'+o.note+'</div>':'')+
+      '<div style="margin-top:10px"><button class="btn btn-success btn-sm" onclick="confirmProduce(\''+o.orderGroupId+'\')">✅ ยืนยันผลิตนมแล้ว</button></div></div></div>';
   }).join('');
 }
+
 function confirmProduce(orderId) {
   var staffid = document.getElementById('prod-staffid').value.trim();
   if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากรก่อน','error'); return; }
@@ -192,12 +254,15 @@ function confirmProduce(orderId) {
   var idx = orders.findIndex(function(o){ return o.orderGroupId === orderId; });
   if (idx >= 0) orders[idx].status = 'PRODUCED';
   saveOrders(orders);
-  fetch(GAS_URL + '?action=confirmProduction&orderId=' + orderId + '&confirmedBy=' + staffid).catch(function(){});
+  gasGet({ action:'confirmProduction', orderId:orderId, confirmedBy:staffid })
+    .then(function(r){ toast(r.ok?'✅ บันทึกใน Sheets แล้ว':'⚠️ local เท่านั้น: '+r.error, r.ok?'success':''); });
   toast('✅ บันทึกยืนยันผลิตนมแล้ว','success');
-  loadProduce();
-  loadOverview();
+  loadProduce(); loadOverview();
 }
+
+// Init
 loadOverview();
+syncFromSheets();
 </script>
 </body>
 </html>

@@ -170,7 +170,8 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
     <div class="header-sub">NICU — รพ.รามาธิบดีจักรีนฤบดินทร์</div>
   </div>
   <div class="header-right">
-    <span class="role-badge">NICU</span>
+    <span id="sync-status" style="display:none;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;align-items:center;gap:4px"></span>
+    <button class="btn btn-ghost btn-sm no-print" onclick="syncFromSheets()" title="ซิงก์ข้อมูลจาก Google Sheets">🔄 ซิงก์</button>
     <a href="nutrition.html" class="btn btn-ghost btn-sm no-print" style="text-decoration:none">🏭 หน้าโภชนาการ</a>
   </div>
 </header>
@@ -555,13 +556,130 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
 
 <!-- ════════════ SCRIPT ════════════ -->
 <script>
-const GAS_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+var GAS_URL = "YOUR_APPS_SCRIPT_URL_HERE"; // ← ใส่ Web App URL จาก Apps Script
 
 // ── State ──────────────────────────────────────────
 var patients = [];
-var orders = []; // each order: { orderGroupId, hn, fullName, bedNo, orderDate, lines:[{milkType,formula,volume,feeds,route,totalPerBottle}], mouthCare, mouthCareFreq, breastFeeding, limitBM, note, orderedBy, status }
+var orders = [];
 var pendingDeleteHN = null;
 var line2Active = false;
+var syncStatus = 'idle'; // idle | syncing | ok | error
+
+// ── GAS helpers ───────────────────────────────────────
+// ใช้ GET อย่างเดียว — หลีกเลี่ยง CORS preflight ของ POST
+function gasGet(params) {
+  var url = GAS_URL + '?' + new URLSearchParams(params).toString();
+  return fetch(url, { redirect: 'follow' })
+    .then(function(r){ return r.json(); })
+    .catch(function(e){ return { ok: false, error: String(e) }; });
+}
+// alias เพื่อ compatibility — ส่งทุกอย่างเป็น GET
+function gasPost(body) { return gasGet(body); }
+
+// setSyncUI: แสดงสถานะ sync ที่มุมขวาบน
+function setSyncUI(state, msg) {
+  var el = document.getElementById('sync-status');
+  if (!el) return;
+  var icons = { idle:'', syncing:'⏳', ok:'✅', error:'⚠️' };
+  var colors = { idle:'rgba(255,255,255,.2)', syncing:'rgba(255,255,255,.25)', ok:'#1a7a4a', error:'#c0392b' };
+  el.textContent = (icons[state]||'') + ' ' + (msg||'');
+  el.style.background = colors[state]||colors.idle;
+  el.style.display = msg ? 'inline-flex' : 'none';
+}
+
+// ── Persist (localStorage fallback) ──────────────
+function persist() {
+  try {
+    localStorage.setItem('milkOrders_v2', JSON.stringify(orders));
+    localStorage.setItem('milkPatients_v2', JSON.stringify(patients));
+  } catch(e){}
+}
+function loadPersisted() {
+  try {
+    var o = localStorage.getItem('milkOrders_v2');
+    var p = localStorage.getItem('milkPatients_v2');
+    if (o) orders = JSON.parse(o);
+    if (p) patients = JSON.parse(p);
+  } catch(e){}
+}
+
+// ── Sync FROM Google Sheets on load ───────────────
+function syncFromSheets() {
+  setSyncUI('syncing', 'กำลังโหลด...');
+  var today = new Date().toISOString().slice(0,10);
+
+  Promise.all([
+    gasGet({ action: 'getPatients' }),
+    gasGet({ action: 'getOrders', date: today }),
+    gasGet({ action: 'getOrderLines' })
+  ]).then(function(results) {
+    var pRes = results[0], oRes = results[1], lRes = results[2];
+
+    // Patients
+    if (pRes.ok && pRes.data && pRes.data.length > 0) {
+      patients = pRes.data.map(function(p) {
+        return { HN: p.HN||p.hn, BedNo: p.BedNo||p.bedNo, FullName: p.FullName||p.fullName,
+          DOB: p.DOB||p.dob, BirthTime: p.BirthTime||p.birthTime||'',
+          Religion: p.Religion||p.religion||'', Allergy: p.Allergy||p.allergy||'NKA' };
+      });
+      persist();
+    }
+
+    // Orders — merge groups + lines
+    if (oRes.ok && oRes.data && oRes.data.length > 0) {
+      var lineMap = {};
+      if (lRes.ok && lRes.data) {
+        lRes.data.forEach(function(l) {
+          var gid = l.OrderGroupId || l.orderGroupId;
+          if (!lineMap[gid]) lineMap[gid] = [];
+          var ct = [];
+          try { ct = JSON.parse(l.CustomTimes||l.customTimes||'[]'); } catch(e){}
+          lineMap[gid].push({
+            milkType: l.MilkType||l.milkType||'',
+            formula:  l.Formula||l.formula||'',
+            volume:   l.VolumePerFeed||l.volume||'',
+            feeds:    l.Feeds||l.feeds||'',
+            route:    l.Route||l.route||'',
+            totalPerBottle: l.TotalPerBottle||l.totalPerBottle||null,
+            customTimes: ct
+          });
+        });
+      }
+      orders = oRes.data
+        .filter(function(o){ return (o.Status||o.status) !== 'DELETED'; })
+        .map(function(o) {
+          var gid = o.OrderGroupId||o.orderGroupId;
+          return {
+            orderGroupId:  gid,
+            hn:            o.HN||o.hn||'',
+            fullName:      o.FullName||o.fullName||'',
+            bedNo:         o.BedNo||o.bedNo||'',
+            orderDate:     today,
+            lines:         lineMap[gid] || [],
+            mouthCare:     o.MouthCare||o.mouthCare||'N',
+            mouthCareFreq: o.MouthCareFreq||o.mouthCareFreq||'',
+            breastFeeding: o.BreastFeeding||o.breastFeeding||'N',
+            limitBM:       o.LimitBM||o.limitBM||'',
+            note:          o.Note||o.note||'',
+            orderedBy:     o.OrderedBy||o.orderedBy||'',
+            status:        o.Status||o.status||'PENDING'
+          };
+        });
+      persist();
+    }
+
+    setSyncUI('ok', 'ซิงก์แล้ว');
+    setTimeout(function(){ setSyncUI('idle',''); }, 3000);
+    renderPatientTable(patients);
+    populateOrderPatients();
+    populateMCPatients();
+    loadDashboard();
+    renderTodayOrders();
+  }).catch(function(err) {
+    setSyncUI('error', 'ออฟไลน์ (ใช้ local)');
+    setTimeout(function(){ setSyncUI('idle',''); }, 5000);
+  });
+}
 
 // ── Formula options ──────────────────────────────────
 var FORMULAS = [
@@ -630,12 +748,6 @@ function loadPersisted() {
     if (o) orders = JSON.parse(o);
     if (p) patients = JSON.parse(p);
   } catch(e){}
-}
-
-// ── GAS ──────────────────────────────────────────────
-function gasGet(params) {
-  var url = GAS_URL + '?' + new URLSearchParams(params).toString();
-  return fetch(url).then(function(r){ return r.json(); }).catch(function(){ return {ok:false}; });
 }
 
 // ── Toast ─────────────────────────────────────────────
@@ -719,7 +831,8 @@ function savePatient() {
   }
   persist();
   renderPatientTable(patients);
-  gasGet({ action:'savePatient', hn:hn, bedNo:bed, fullName:name, dob:dob, birthTime:btime, religion:religion, allergy:allergy, registeredBy:staffid });
+  gasPost({ action:'savePatient', hn:hn, bedNo:bed, fullName:name, dob:dob, birthTime:btime, religion:religion, allergy:allergy, registeredBy:staffid })
+    .then(function(r){ setSyncUI(r.ok?'ok':'error', r.ok?'บันทึกลง Sheets แล้ว':'⚠️ '+r.error); setTimeout(function(){setSyncUI('idle','');},3000); });
   resetRegForm();
 }
 function renderPatientTable(data) {
@@ -750,7 +863,8 @@ function confirmDelete() {
   if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากร 6 หลัก','error'); return; }
   patients = patients.filter(function(p){ return p.HN !== pendingDeleteHN; });
   persist(); renderPatientTable(patients);
-  gasGet({ action:'deletePatient', hn:pendingDeleteHN, reason:reason, deletedBy:staffid });
+  gasPost({ action:'deletePatient', hn:pendingDeleteHN, reason:reason, deletedBy:staffid })
+    .then(function(r){ setSyncUI(r.ok?'ok':'error', r.ok?'ลบจาก Sheets แล้ว':'⚠️ '+r.error); setTimeout(function(){setSyncUI('idle','');},3000); });
   toast('✅ ลบ HN ' + pendingDeleteHN + ' เหตุผล: ' + reason,'success');
   closeDeleteModal();
 }
@@ -860,6 +974,32 @@ function saveOrder() {
   persist();
   renderTodayOrders();
   updateDashboardStats();
+
+  // บันทึกลง Google Sheets ผ่าน GET (linesJson = JSON string)
+  setSyncUI('syncing', 'บันทึก...');
+  gasGet({
+    action:       'saveOrder',
+    orderGroupId: newOrder.orderGroupId,
+    hn:           newOrder.hn,
+    fullName:     newOrder.fullName,
+    bedNo:        newOrder.bedNo,
+    mouthCare:    newOrder.mouthCare,
+    mouthCareFreq:newOrder.mouthCareFreq,
+    breastFeeding:newOrder.breastFeeding,
+    limitBM:      newOrder.limitBM,
+    note:         newOrder.note,
+    orderedBy:    newOrder.orderedBy,
+    linesJson:    JSON.stringify(newOrder.lines.map(function(l){ return {
+      milkType: l.milkType, formula: l.formula, volume: l.volume,
+      feeds: l.feeds, route: l.route,
+      totalPerBottle: l.totalPerBottle || '',
+      customTimes: l.customTimes || []
+    }; }))
+  }).then(function(r){
+    setSyncUI(r.ok ? 'ok' : 'error', r.ok ? '✅ บันทึกลง Sheets' : '⚠️ ' + r.error);
+    setTimeout(function(){ setSyncUI('idle',''); }, 3000);
+  });
+
   toast('✅ บันทึกคำสั่งนมแล้ว รอ Incharge Nurse ทวนสอบ','success');
   resetOrderForm();
 }
@@ -962,13 +1102,16 @@ function doVerify(orderId, status) {
   if (idx >= 0) { orders[idx].status = status; orders[idx].verifiedBy = staffid; }
   persist(); renderVerifyList(); updateDashboardStats();
   toast(status === 'APPROVED' ? '✅ รับคำสั่งเรียบร้อย' : '↩ ส่งกลับทบทวน', status === 'APPROVED' ? 'success' : '');
-  gasGet({ action:'verifyOrder', orderId:orderId, status:status, verifiedBy:staffid });
+  setSyncUI('syncing','บันทึก...');
+  gasPost({ action:'verifyOrder', orderId:orderId, status:status, verifiedBy:staffid })
+    .then(function(r){ setSyncUI(r.ok?'ok':'error', r.ok?'✅ อัปเดต Sheets':'⚠️ '+r.error); setTimeout(function(){setSyncUI('idle','');},3000); });
 }
 function deleteOrder(orderId) {
   if (!confirm('ยืนยันลบคำสั่งนี้?')) return;
   orders = orders.filter(function(o){ return o.orderGroupId !== orderId; });
   persist(); renderVerifyList(); renderTodayOrders(); updateDashboardStats();
   toast('🗑️ ลบคำสั่งแล้ว');
+  gasPost({ action:'deleteOrder', orderId:orderId, deletedBy:'NICU' });
 }
 
 // ── #5: Edit order modal ──────────────────────────────
@@ -1004,9 +1147,23 @@ function saveEditOrder() {
   orders[idx].lines[lineIdx].route = route;
   orders[idx].lines[lineIdx].totalPerBottle = totalPerBottle;
   orders[idx].note = note;
-  orders[idx].status = 'PENDING'; // reset to pending after edit
+  orders[idx].status = 'PENDING';
   persist(); closeEditModal(); renderVerifyList();
   toast('✅ แก้ไขคำสั่งแล้ว สถานะรีเซ็ตเป็น รอทวนสอบ','success');
+  setSyncUI('syncing','บันทึก...');
+  gasGet({
+    action: 'editOrderLine',
+    orderId: orderId,
+    lineIndex: lineIdx + 1,
+    formula: formula,
+    volume: volume,
+    feeds: feeds,
+    route: route,
+    totalPerBottle: totalPerBottle || '',
+    customTimesJson: JSON.stringify(orders[idx] && orders[idx].lines[lineIdx] ? orders[idx].lines[lineIdx].customTimes || [] : []),
+    note: note,
+    editedBy: 'NICU'
+  }).then(function(r){ setSyncUI(r.ok?'ok':'error', r.ok?'✅ แก้ไขใน Sheets':'⚠️ '+r.error); setTimeout(function(){setSyncUI('idle','');},3000); });
 }
 
 // ── Time picker ───────────────────────────────────────
@@ -1156,9 +1313,13 @@ function statusBadge(status) {
 document.getElementById('mc-date').value = new Date().toISOString().slice(0,10);
 buildFormulaOptions('line1-formula');
 buildFormulaOptions('line2-formula');
-loadPersisted();
+buildFormulaOptions('edit-formula');
+loadPersisted();           // load localStorage first (instant display)
 loadDashboard();
 renderPatientTable(patients);
+populateOrderPatients();
+populateMCPatients();
+syncFromSheets();          // then sync from Google Sheets (async)
 </script>
 </body>
 </html>
