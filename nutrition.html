@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Milk System — โภชนาการ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+:root {
+  --orange:#e07b2a; --orange-light:#fdf3e7; --orange-dark:#b86522;
+  --teal:#0a7c6e; --teal-light:#e6f4f2;
+  --green:#1a7a4a; --green-light:#e8f5ed;
+  --red:#c0392b; --blue:#1a5f9e; --blue-light:#e8f0f9;
+  --gray-50:#f8f9fa; --gray-100:#f1f3f4; --gray-200:#e2e5e9;
+  --gray-400:#9aa3af; --gray-600:#5c6470; --gray-800:#2d333b;
+  --font-th:'Sarabun',system-ui,sans-serif;
+  --radius:10px; --shadow:0 2px 12px rgba(0,0,0,.10); --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-th);background:var(--gray-50);color:var(--gray-800);font-size:15px}
+.header{background:linear-gradient(135deg,var(--orange-dark) 0%,var(--orange) 100%);color:white;padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
+.header-logo{width:42px;height:42px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.header-title{font-size:17px;font-weight:700}
+.header-sub{font-size:12px;opacity:.75}
+.header-right{margin-left:auto}
+.nav{background:#fff;border-bottom:2px solid var(--gray-200);display:flex;padding:0 16px;gap:2px}
+.nav-btn{padding:12px 18px;border:none;background:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:500;color:var(--gray-600);border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s}
+.nav-btn:hover{color:var(--orange)}
+.nav-btn.active{color:var(--orange);border-bottom-color:var(--orange);font-weight:700}
+.main{padding:20px 16px;max-width:1000px;margin:0 auto}
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:700;color:var(--orange-dark);display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gray-200)}
+.pane{display:none}.pane.active{display:block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:7px;font-family:var(--font-th);font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--orange);color:#fff}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{background:#145e38}
+.btn-outline{background:transparent;color:var(--orange);border:1.5px solid var(--orange)}
+.btn-ghost{background:var(--gray-100);color:var(--gray-600)}
+.btn-ghost:hover{background:var(--gray-200)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-approved{background:var(--green-light);color:var(--green)}
+.badge-produced{background:var(--blue-light);color:var(--blue)}
+.badge-pending{background:var(--orange-light);color:var(--orange)}
+.alert{border-radius:8px;padding:12px 16px;font-size:14px;font-weight:500;margin-bottom:14px}
+.alert-info{background:var(--blue-light);border-left:4px solid var(--blue)}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border-left:4px solid var(--orange)}
+.stat-card.green{border-left-color:var(--green)}.stat-card.blue{border-left-color:var(--blue)}
+.stat-num{font-size:26px;font-weight:800;color:var(--orange)}
+.stat-card.green .stat-num{color:var(--green)}.stat-card.blue .stat-num{color:var(--blue)}
+.stat-lbl{font-size:12px;color:var(--gray-600);font-weight:600;margin-top:2px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+label{font-size:13px;font-weight:600;color:var(--gray-600)}
+input,select{border:1.5px solid var(--gray-200);border-radius:7px;padding:9px 12px;font-family:var(--font-th);font-size:14px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(224,123,42,.12)}
+.prod-group{border:1.5px solid var(--gray-200);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.prod-group-header{background:var(--orange-light);padding:10px 14px;font-weight:700;font-size:14px;color:var(--orange-dark);display:flex;align-items:center;justify-content:space-between}
+.prod-group-body{padding:12px 14px}
+.prod-line{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px;align-items:flex-start}
+.prod-line:last-child{border-bottom:none}
+.prod-lbl{font-weight:600;color:var(--gray-600);min-width:80px;flex-shrink:0}
+.prod-val{flex:1;word-break:break-word;line-height:1.5}
+.line-tag{background:var(--orange);color:white;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;flex-shrink:0;margin-right:4px}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--gray-800);color:#fff;padding:12px 20px;border-radius:9px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(60px);opacity:0;transition:all .3s;z-index:999}
+#toast.show{transform:translateY(0);opacity:1}
+@media print{.no-print{display:none!important}body{background:white}.main{padding:0}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-logo">🏭</div>
+  <div>
+    <div class="header-title">Smart Neonatal Milk Safety System</div>
+    <div class="header-sub">หน่วยโภชนาการ — รพ.รามาธิบดีจักรีนฤบดินทร์</div>
+  </div>
+  <div class="header-right">
+    <a href="index.html" class="btn btn-ghost btn-sm no-print" style="text-decoration:none">🏥 หน้า NICU</a>
+  </div>
+</header>
+<nav class="nav no-print">
+  <button class="nav-btn active" onclick="showPane('overview')" data-pane="overview">🏠 ภาพรวม</button>
+  <button class="nav-btn" onclick="showPane('produce')" data-pane="produce">🧑‍🍳 ผลิตนม</button>
+</nav>
+<main class="main">
+
+<!-- OVERVIEW -->
+<div class="pane active" id="pane-overview">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-approved">0</div><div class="stat-lbl">คำสั่งรอผลิต</div></div>
+    <div class="stat-card green"><div class="stat-num" id="stat-produced">0</div><div class="stat-lbl">ผลิตแล้ววันนี้</div></div>
+    <div class="stat-card blue"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">คำสั่งทั้งหมดวันนี้</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 สรุปคำสั่งผลิตนมวันนี้</div>
+    <div class="alert alert-info">📌 แสดงเฉพาะคำสั่งที่ผ่านการอนุมัติจาก Incharge Nurse แล้ว</div>
+    <div id="overview-list"><div style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</div></div>
+    <div class="btn-row no-print">
+      <button class="btn btn-outline btn-sm" onclick="loadOverview()">🔄 รีเฟรช</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ พิมพ์รายการ</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCE -->
+<div class="pane" id="pane-produce">
+  <div class="card no-print">
+    <div class="card-title">🧑‍🍳 ยืนยันการผลิตนม</div>
+    <div class="form-group" style="max-width:220px">
+      <label>รหัสบุคลากร โภชนาการ</label>
+      <input type="text" id="prod-staffid" maxlength="6" placeholder="XXXXXX">
+    </div>
+  </div>
+  <div id="produce-list"><div style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</div></div>
+  <div class="btn-row no-print"><button class="btn btn-outline btn-sm" onclick="loadProduce()">🔄 รีเฟรช</button></div>
+</div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+var GAS_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+function getOrders() { try { return JSON.parse(localStorage.getItem('milkOrders_v2')||'[]'); } catch(e){ return []; } }
+function saveOrders(orders) { try { localStorage.setItem('milkOrders_v2', JSON.stringify(orders)); } catch(e){} }
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'success' ? '#1a7a4a' : type === 'error' ? '#c0392b' : '#2d333b';
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+function showPane(name) {
+  document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('pane-' + name).classList.add('active');
+  var btn = document.querySelector('[data-pane="' + name + '"]');
+  if (btn) btn.classList.add('active');
+  if (name === 'overview') loadOverview();
+  if (name === 'produce') loadProduce();
+}
+function getTodayStr() { return new Date().toISOString().slice(0,10); }
+function loadOverview() {
+  var orders = getOrders();
+  var today = getTodayStr();
+  var todayOrders = orders.filter(function(o){ return o.orderDate === today && (o.status === 'APPROVED' || o.status === 'PRODUCED'); });
+  var ap = todayOrders.filter(function(o){ return o.status === 'APPROVED'; }).length;
+  var pr = todayOrders.filter(function(o){ return o.status === 'PRODUCED'; }).length;
+  document.getElementById('stat-approved').textContent = ap;
+  document.getElementById('stat-produced').textContent = pr;
+  document.getElementById('stat-total').textContent = todayOrders.length;
+  var el = document.getElementById('overview-list');
+  if (!todayOrders.length) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีคำสั่งอนุมัติ</div>'; return; }
+  el.innerHTML = todayOrders.map(function(o){
+    var linesHTML = o.lines.map(function(l, i){
+      var totalVol = parseFloat(l.volume) * parseInt(l.feeds);
+      return '<div class="prod-line">' +
+        '<span class="line-tag">รายการ '+(i+1)+'</span>' +
+        '<div style="flex:1"><div><span class="prod-lbl">ชนิดนม:</span><b>' + l.milkType + '</b></div>' +
+        '<div><span class="prod-lbl">สูตร:</span><span class="prod-val">' + (l.formula||'—') + '</span></div>' +
+        '<div><span class="prod-lbl">ปริมาณ:</span><b>' + l.volume + ' ml × ' + l.feeds + ' มื้อ = ' + totalVol + ' ml/วัน</b></div>' +
+        '<div><span class="prod-lbl">Route:</span>' + l.route + (l.totalPerBottle ? ' <span style="color:var(--orange);font-weight:600">(รวม '+l.totalPerBottle+' ml/ขวด)</span>' : '') + '</div></div></div>';
+    }).join('');
+    var statusBadge = o.status === 'PRODUCED' ? '<span class="badge badge-produced">✅ ผลิตแล้ว</span>' : '<span class="badge badge-pending">⏳ รอผลิต</span>';
+    return '<div class="prod-group"><div class="prod-group-header"><span>👶 ' + o.fullName + ' | HN: ' + o.hn + ' | เตียง: ' + o.bedNo + '</span>' + statusBadge + '</div><div class="prod-group-body">' + linesHTML + (o.mouthCare==='Y'?'<div class="prod-line"><span class="prod-lbl">Mouth care:</span>0.2 ml นมแม่ '+(o.mouthCareFreq||'q3h')+'</div>':'') + (o.note?'<div class="prod-line"><span class="prod-lbl">หมายเหตุ:</span>'+o.note+'</div>':'') + '</div></div>';
+  }).join('');
+}
+function loadProduce() {
+  var orders = getOrders();
+  var today = getTodayStr();
+  var pending = orders.filter(function(o){ return o.orderDate === today && o.status === 'APPROVED'; });
+  var el = document.getElementById('produce-list');
+  if (!pending.length) { el.innerHTML = '<div class="card" style="text-align:center;color:var(--green);padding:20px;font-weight:600">✅ ไม่มีคำสั่งรอผลิต</div>'; return; }
+  el.innerHTML = pending.map(function(o){
+    var linesHTML = o.lines.map(function(l, i){
+      var totalVol = parseFloat(l.volume) * parseInt(l.feeds);
+      return '<div class="prod-line">' +
+        '<span class="line-tag">รายการ '+(i+1)+'</span>' +
+        '<div style="flex:1"><div><b>' + l.milkType + '</b></div>' +
+        '<div style="word-break:break-word;line-height:1.5">' + (l.formula||'—') + '</div>' +
+        '<div><b>' + l.volume + ' ml × ' + l.feeds + ' มื้อ = ' + totalVol + ' ml/วัน</b></div>' +
+        '<div>Route: ' + l.route + (l.totalPerBottle ? ' <b style="color:var(--orange)">(รวม '+l.totalPerBottle+' ml/ขวด)</b>' : '') + '</div></div></div>';
+    }).join('');
+    return '<div class="prod-group"><div class="prod-group-header"><span>👶 ' + o.fullName + ' | HN: ' + o.hn + ' | ' + o.bedNo + '</span><span class="badge badge-pending">⏳ รอผลิต</span></div><div class="prod-group-body">' + linesHTML + (o.note?'<div class="prod-line"><span class="prod-lbl">หมายเหตุ:</span>'+o.note+'</div>':'') + '<div style="margin-top:10px"><button class="btn btn-success btn-sm" onclick="confirmProduce(\'' + o.orderGroupId + '\')">✅ ยืนยันผลิตนมแล้ว</button></div></div></div>';
+  }).join('');
+}
+function confirmProduce(orderId) {
+  var staffid = document.getElementById('prod-staffid').value.trim();
+  if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากรก่อน','error'); return; }
+  var orders = getOrders();
+  var idx = orders.findIndex(function(o){ return o.orderGroupId === orderId; });
+  if (idx >= 0) orders[idx].status = 'PRODUCED';
+  saveOrders(orders);
+  fetch(GAS_URL + '?action=confirmProduction&orderId=' + orderId + '&confirmedBy=' + staffid).catch(function(){});
+  toast('✅ บันทึกยืนยันผลิตนมแล้ว','success');
+  loadProduce();
+  loadOverview();
+}
+loadOverview();
+</script>
+</body>
+</html>

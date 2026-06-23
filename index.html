@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Neonatal Milk Safety System — NICU</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+:root {
+  --teal:#0a7c6e; --teal-light:#e6f4f2; --teal-mid:#c8e8e4; --teal-dark:#065549;
+  --amber:#e07b2a; --amber-light:#fdf3e7;
+  --red:#c0392b; --red-light:#fdecea;
+  --green:#1a7a4a; --green-light:#e8f5ed;
+  --blue:#1a5f9e; --blue-light:#e8f0f9;
+  --gray-50:#f8f9fa; --gray-100:#f1f3f4; --gray-200:#e2e5e9;
+  --gray-400:#9aa3af; --gray-600:#5c6470; --gray-800:#2d333b; --white:#fff;
+  --font-th:'Sarabun','Noto Sans Thai',system-ui,sans-serif;
+  --radius:10px; --shadow:0 2px 12px rgba(0,0,0,.10); --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-th);background:var(--gray-50);color:var(--gray-800);font-size:15px;min-height:100vh}
+.header{background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 100%);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
+.header-logo{width:42px;height:42px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.header-title{font-size:17px;font-weight:700}
+.header-sub{font-size:12px;opacity:.75;margin-top:1px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.role-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600}
+.nav{background:#fff;border-bottom:2px solid var(--gray-200);display:flex;overflow-x:auto;padding:0 16px;gap:2px}
+.nav-btn{padding:12px 18px;border:none;background:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:500;color:var(--gray-600);border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:6px}
+.nav-btn:hover{color:var(--teal)}
+.nav-btn.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:700}
+.main{padding:20px 16px;max-width:1000px;margin:0 auto}
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:700;color:var(--teal-dark);display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gray-200)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.col3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.col1{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:13px;font-weight:600;color:var(--gray-600)}
+label .req{color:var(--red);margin-left:2px}
+input,select,textarea{border:1.5px solid var(--gray-200);border-radius:7px;padding:9px 12px;font-family:var(--font-th);font-size:14px;color:var(--gray-800);transition:border-color .2s,box-shadow .2s;background:#fff;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,124,110,.12)}
+input:disabled,select:disabled{background:var(--gray-100);color:var(--gray-400)}
+textarea{resize:vertical;min-height:72px}
+.age-display{background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:7px;padding:9px 12px;font-size:14px;font-weight:600;color:var(--teal-dark);min-height:40px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:7px;font-family:var(--font-th);font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--teal-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(10,124,110,.3)}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{background:#145e38}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#922b21}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-amber:hover{background:#b86522}
+.btn-outline{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+.btn-outline:hover{background:var(--teal-light)}
+.btn-ghost{background:var(--gray-100);color:var(--gray-600)}
+.btn-ghost:hover{background:var(--gray-200)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--gray-200)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--teal);color:#fff;padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--gray-100)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--teal-light)}
+tbody td{padding:10px 12px;vertical-align:middle}
+/* ── fix #3,#4: no truncation in tables ── */
+tbody td.td-formula{max-width:280px;word-break:break-word;white-space:normal;line-height:1.4}
+tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-pending{background:var(--amber-light);color:var(--amber)}
+.badge-approved{background:var(--green-light);color:var(--green)}
+.badge-review{background:var(--red-light);color:var(--red)}
+.badge-produced{background:var(--blue-light);color:var(--blue)}
+.alert{border-radius:8px;padding:12px 16px;font-size:14px;font-weight:500;display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.alert-info{background:var(--blue-light);border-left:4px solid var(--blue)}
+.alert-success{background:var(--green-light);border-left:4px solid var(--green)}
+.alert-warning{background:var(--amber-light);border-left:4px solid var(--amber)}
+.alert-danger{background:var(--red-light);border-left:4px solid var(--red)}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--gray-800);color:#fff;padding:12px 20px;border-radius:9px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(60px);opacity:0;transition:all .3s;z-index:999}
+#toast.show{transform:translateY(0);opacity:1}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--gray-400);font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--gray-200)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:16px;font-weight:700;color:var(--gray-800)}
+
+/* ── Milk card print ── */
+.milk-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.milk-card{border:1.5px solid var(--gray-200);border-radius:8px;padding:12px;background:#fff;font-size:12px;page-break-inside:avoid}
+.milk-card-header{background:var(--teal);color:white;margin:-12px -12px 10px;padding:7px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.milk-card-body{display:flex;justify-content:space-between;gap:8px}
+.milk-card-info{flex:1}
+.milk-card-info .row{margin-bottom:4px;display:flex;gap:4px;align-items:flex-start}
+.milk-card-info .lbl{color:var(--gray-600);font-weight:600;min-width:58px;flex-shrink:0}
+.milk-card-info .val{word-break:break-word;line-height:1.4}
+.milk-card-qr{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
+.milk-card-footer{margin-top:8px;padding-top:8px;border-top:1px dashed var(--gray-200);font-size:11px;color:var(--gray-600)}
+.checkbox-row{display:flex;align-items:center;gap:8px}
+.checkbox-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--teal)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border-left:4px solid var(--teal)}
+.stat-card.amber{border-left-color:var(--amber)}
+.stat-card.green{border-left-color:var(--green)}
+.stat-card.blue{border-left-color:var(--blue)}
+.stat-num{font-size:26px;font-weight:800;color:var(--teal-dark)}
+.stat-card.amber .stat-num{color:var(--amber)}
+.stat-card.green .stat-num{color:var(--green)}
+.stat-card.blue .stat-num{color:var(--blue)}
+.stat-lbl{font-size:12px;color:var(--gray-600);font-weight:600;margin-top:2px}
+.search-wrap{position:relative}
+.search-wrap input{padding-left:36px}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:15px;pointer-events:none}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:12px;box-shadow:var(--shadow-lg);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:18px;font-weight:700;color:var(--teal-dark);margin-bottom:16px}
+.pane{display:none}
+.pane.active{display:block}
+.steps{display:flex;gap:4px;margin-bottom:18px;align-items:center;flex-wrap:wrap}
+.step-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--gray-400)}
+.step-item.done{color:var(--teal)}
+.step-circle{width:24px;height:24px;border-radius:50%;background:var(--gray-200);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.step-item.done .step-circle{background:var(--teal);color:white}
+.step-sep{flex:1;height:2px;background:var(--gray-200);min-width:12px}
+.step-sep.done{background:var(--teal)}
+.milk-type-group{display:flex;gap:8px;flex-wrap:wrap}
+.milk-type-btn{padding:7px 16px;border:1.5px solid var(--gray-200);border-radius:20px;background:#fff;cursor:pointer;font-family:var(--font-th);font-size:13px;font-weight:600;color:var(--gray-600);transition:all .15s}
+.milk-type-btn.selected{border-color:var(--teal);background:var(--teal);color:white}
+
+/* ── Time picker (4/6 meals) ── */
+.time-picker-box{background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:8px;padding:12px 14px;margin-top:10px}
+.time-picker-title{font-size:12px;font-weight:700;color:var(--teal-dark);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.time-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+@media(max-width:640px){.time-grid{grid-template-columns:repeat(3,1fr)}}
+.time-chip{display:flex;align-items:center;justify-content:center;padding:7px 4px;border:1.5px solid var(--gray-200);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-600);transition:all .15s;user-select:none;background:#fff;text-align:center}
+.time-chip:hover{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark)}
+.time-chip.sel{border-color:var(--teal);background:var(--teal);color:#fff}
+.time-chip-seq{font-size:10px;display:block;font-weight:400;opacity:.8}
+
+/* ── #2: multi-line order rows ── */
+.order-block{border:1.5px solid var(--gray-200);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.order-block-header{background:var(--teal-light);padding:8px 14px;font-weight:700;font-size:13px;color:var(--teal-dark);display:flex;align-items:center;justify-content:space-between}
+.order-line{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;border-top:1px solid var(--gray-100);align-items:center;font-size:13px}
+.order-line-tag{background:var(--teal-light);color:var(--teal-dark);border-radius:4px;padding:2px 8px;font-size:12px;font-weight:700;flex-shrink:0}
+
+@media print{
+  .no-print{display:none!important}
+  .milk-cards-grid{break-inside:avoid}
+  body{background:white}
+  .main{padding:0}
+}
+@media(max-width:640px){
+  .form-grid,.form-grid.col3{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .milk-cards-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header no-print">
+  <div class="header-logo">🍼</div>
+  <div>
+    <div class="header-title">Smart Neonatal Milk Safety System</div>
+    <div class="header-sub">NICU — รพ.รามาธิบดีจักรีนฤบดินทร์</div>
+  </div>
+  <div class="header-right">
+    <span class="role-badge">NICU</span>
+    <a href="nutrition.html" class="btn btn-ghost btn-sm no-print" style="text-decoration:none">🏭 หน้าโภชนาการ</a>
+  </div>
+</header>
+
+<!-- Nav -->
+<nav class="nav no-print">
+  <button class="nav-btn active" onclick="showPane('dashboard')" data-pane="dashboard">🏠 ภาพรวม</button>
+  <button class="nav-btn" onclick="showPane('register')" data-pane="register">📋 ลงทะเบียน</button>
+  <button class="nav-btn" onclick="showPane('order')" data-pane="order">🩺 คำสั่งนม</button>
+  <button class="nav-btn" onclick="showPane('verify')" data-pane="verify">✅ ทวนสอบคำสั่ง</button>
+  <button class="nav-btn" onclick="showPane('milkcard')" data-pane="milkcard">🏷️ บัตรนม + QR</button>
+</nav>
+
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div class="pane active" id="pane-dashboard">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-patients">0</div><div class="stat-lbl">ผู้ป่วยทั้งหมด</div></div>
+    <div class="stat-card amber"><div class="stat-num" id="stat-pending">0</div><div class="stat-lbl">คำสั่งรอทวนสอบ</div></div>
+    <div class="stat-card green"><div class="stat-num" id="stat-approved">0</div><div class="stat-lbl">คำสั่งผ่านแล้ว</div></div>
+    <div class="stat-card blue"><div class="stat-num" id="stat-today">0</div><div class="stat-lbl">คำสั่งวันนี้ทั้งหมด</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔄 ขั้นตอนการบริหารนม</div>
+    <div class="steps">
+      <div class="step-item done"><div class="step-circle">1</div>ลงทะเบียน</div>
+      <div class="step-sep done"></div>
+      <div class="step-item done"><div class="step-circle">2</div>สั่งนม</div>
+      <div class="step-sep done"></div>
+      <div class="step-item done"><div class="step-circle">3</div>ทวนสอบ</div>
+      <div class="step-sep done"></div>
+      <div class="step-item done"><div class="step-circle">4</div>บัตรนม+QR</div>
+      <div class="step-sep"></div>
+      <div class="step-item"><div class="step-circle">5</div>ขนส่ง</div>
+      <div class="step-sep"></div>
+      <div class="step-item"><div class="step-circle">6</div>Scan+Feed</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 คำสั่งนมวันนี้</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>HN</th><th>ชื่อผู้ป่วย</th><th>เตียง</th><th>สูตรนม</th><th>มื้อ/วัน</th><th>สถานะ</th></tr></thead>
+        <tbody id="dashboard-orders"><tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 รีเฟรช</button></div>
+  </div>
+</div>
+
+<!-- ══ REGISTRATION ══ -->
+<div class="pane" id="pane-register">
+  <div class="card">
+    <div class="card-title">📋 ลงทะเบียนผู้ป่วย</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>HN <span class="req">*</span></label>
+        <input type="text" id="reg-hn" placeholder="C2645562" oninput="checkHN(this.value)">
+      </div>
+      <div class="form-group">
+        <label>หมายเลขห้อง/เตียง <span class="req">*</span></label>
+        <select id="reg-bed">
+          <option value="">— เลือกเตียง —</option>
+          <optgroup label="NICU01"><option>NICU01-01</option><option>NICU01-02</option><option>NICU01-03</option><option>NICU01-04</option><option>NICU01-05</option></optgroup>
+          <optgroup label="NICU02"><option>NICU02-01</option><option>NICU02-02</option><option>NICU02-03</option><option>NICU02-04</option><option>NICU02-05</option><option>NICU02-06</option><option>NICU02-07</option><option>NICU02-08</option><option>NICU02-09</option><option>NICU02-10</option></optgroup>
+          <optgroup label="NICU03"><option>NICU03-01</option><option>NICU03-02</option></optgroup>
+          <optgroup label="NICU04"><option>NICU04-01</option><option>NICU04-02</option><option>NICU04-03</option><option>NICU04-04</option><option>NICU04-05</option><option>NICU04-06</option></optgroup>
+          <optgroup label="NICU05"><option>NICU05-01</option><option>NICU05-02</option><option>NICU05-03</option><option>NICU05-04</option><option>NICU05-05</option></optgroup>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>ชื่อ-สกุล <span class="req">*</span></label>
+        <input type="text" id="reg-name" placeholder="ทารกของ นาง...">
+      </div>
+      <div class="form-group">
+        <label>วันเดือนปีเกิด <span class="req">*</span></label>
+        <input type="date" id="reg-dob" onchange="calcAge()">
+      </div>
+      <div class="form-group">
+        <label>เวลาเกิด (ถ้ามี)</label>
+        <input type="time" id="reg-btime" onchange="calcAge()">
+      </div>
+      <div class="form-group full">
+        <label>อายุปัจจุบัน (อัปเดตเรียลไทม์)</label>
+        <div class="age-display" id="age-display">— กรุณาเลือกวันเกิด —</div>
+      </div>
+      <div class="form-group">
+        <label>ศาสนา</label>
+        <select id="reg-religion">
+          <option value="พุทธ">พุทธ</option><option value="คริสต์">คริสต์</option>
+          <option value="อิสลาม">อิสลาม</option><option value="พราหมณ์">พราหมณ์</option>
+          <option value="ฮินดู">ฮินดู</option><option value="ไม่ระบุ">ไม่ระบุ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ประวัติการแพ้ยา/อาหาร</label>
+        <input type="text" id="reg-allergy" value="NKA">
+      </div>
+      <div class="form-group">
+        <label>รหัสบุคลากร 6 หลัก <span class="req">*</span></label>
+        <input type="text" id="reg-staffid" maxlength="6" placeholder="XXXXXX">
+      </div>
+    </div>
+    <div id="reg-hn-alert"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="savePatient()">💾 บันทึกลงทะเบียน</button>
+      <button class="btn btn-ghost" onclick="resetRegForm()">↺ ล้างฟอร์ม</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">รายชื่อผู้ป่วยที่ลงทะเบียน</div>
+      <div class="search-wrap" style="width:220px"><span class="search-icon">🔍</span><input type="text" placeholder="ค้นหา HN / ชื่อ" oninput="filterPatients(this.value)"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>HN</th><th>ชื่อ-สกุล</th><th>เตียง</th><th>อายุ</th><th>ศาสนา</th><th>แพ้</th><th>จัดการ</th></tr></thead>
+        <tbody id="patient-table"><tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีผู้ป่วย</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MILK ORDER ══ -->
+<div class="pane" id="pane-order">
+  <div class="card">
+    <div class="card-title">🩺 คำสั่งนม Electronic Milk Order</div>
+    <div class="form-grid col1">
+      <div class="form-group">
+        <label>เลือกผู้ป่วย <span class="req">*</span></label>
+        <select id="order-patient" onchange="onPatientSelect(this.value)">
+          <option value="">— เลือกผู้ป่วย —</option>
+        </select>
+      </div>
+    </div>
+    <div id="order-patient-info" style="display:none;" class="alert alert-info"><span id="order-patient-detail"></span></div>
+
+    <!-- ── #2: นม Line 1 ── -->
+    <div style="background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:8px;padding:14px;margin-top:14px">
+      <div style="font-weight:700;color:var(--teal-dark);margin-bottom:12px;font-size:14px">🍼 รายการนมที่ 1</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>ชนิดนม <span class="req">*</span></label>
+        <div class="milk-type-group">
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(1,'OMM',this)">🤱 นมแม่ (OMM)</button>
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(1,'DBM',this)">🏦 DBM</button>
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(1,'Formula',this)">🍼 นมผสม</button>
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(1,'NPO',this)">🚫 NPO</button>
+        </div>
+        <input type="hidden" id="line1-milktype">
+      </div>
+      <div class="form-group" id="line1-formula-grp" style="margin-bottom:12px;display:none">
+        <label>สูตรนม (เต็ม) <span class="req">*</span></label>
+        <select id="line1-formula" size="1" style="height:auto">
+          <option value="">— เลือกสูตรนม —</option>
+        </select>
+      </div>
+      <div class="form-grid col3">
+        <div class="form-group">
+          <label>ปริมาณ/มื้อ (ml) <span class="req">*</span></label>
+          <input type="number" id="line1-volume" min="0" max="500" oninput="calcTotal(1)">
+        </div>
+        <div class="form-group">
+          <label>จำนวนมื้อ/วัน <span class="req">*</span></label>
+          <select id="line1-feeds" onchange="calcTotal(1);onFeedsChange(1)">
+            <option value="">—</option>
+            <option value="4">4 มื้อ (q 6 h)</option>
+            <option value="6">6 มื้อ (q 4 h)</option>
+            <option value="8">8 มื้อ (q 3 h)</option>
+            <option value="12">12 มื้อ (q 2 h)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Route <span class="req">*</span></label>
+          <select id="line1-route" onchange="calcTotal(1)">
+            <option value="">— เลือก Route —</option>
+            <option value="Bottle">Bottle feeding</option>
+            <option value="Cup">Cup feeding</option>
+            <option value="TF-Gavage">Tube feed gavage</option>
+            <option value="TF-Drip">Tube feed drip</option>
+            <option value="SF-Bag">Bag for SF</option>
+          </select>
+        </div>
+      </div>
+      <div id="line1-total" style="margin-top:8px;font-size:13px;color:var(--teal-dark);font-weight:600"></div>
+      <!-- Time picker for 4/6 meals -->
+      <div id="line1-timepicker" style="display:none"></div>
+    </div>
+
+    <!-- ── #2: เพิ่มนม Line 2 ── -->
+    <div id="line2-toggle" style="margin-top:10px">
+      <button type="button" class="btn btn-outline btn-sm" onclick="toggleLine2()">➕ เพิ่มรายการนมที่ 2 (ในคำสั่งเดียวกัน)</button>
+    </div>
+    <div id="line2-block" style="display:none;background:var(--amber-light);border:1.5px solid #f5c9a3;border-radius:8px;padding:14px;margin-top:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-weight:700;color:var(--orange, #b86522);font-size:14px">🍼 รายการนมที่ 2</div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="removeLine2()">✕ ลบรายการนี้</button>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>ชนิดนม</label>
+        <div class="milk-type-group">
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(2,'OMM',this)">🤱 นมแม่ (OMM)</button>
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(2,'DBM',this)">🏦 DBM</button>
+          <button type="button" class="milk-type-btn" onclick="selectMilkLine(2,'Formula',this)">🍼 นมผสม</button>
+        </div>
+        <input type="hidden" id="line2-milktype">
+      </div>
+      <div class="form-group" id="line2-formula-grp" style="margin-bottom:12px;display:none">
+        <label>สูตรนม (เต็ม)</label>
+        <select id="line2-formula">
+          <option value="">— เลือกสูตรนม —</option>
+        </select>
+      </div>
+      <div class="form-grid col3">
+        <div class="form-group">
+          <label>ปริมาณ/มื้อ (ml)</label>
+          <input type="number" id="line2-volume" min="0" max="500" oninput="calcTotal(2)">
+        </div>
+        <div class="form-group">
+          <label>จำนวนมื้อ/วัน</label>
+          <select id="line2-feeds" onchange="calcTotal(2);onFeedsChange(2)">
+            <option value="">—</option>
+            <option value="4">4 มื้อ (q 6 h)</option>
+            <option value="6">6 มื้อ (q 4 h)</option>
+            <option value="8">8 มื้อ (q 3 h)</option>
+            <option value="12">12 มื้อ (q 2 h)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Route</label>
+          <select id="line2-route" onchange="calcTotal(2)">
+            <option value="">— เลือก Route —</option>
+            <option value="Bottle">Bottle feeding</option>
+            <option value="Cup">Cup feeding</option>
+            <option value="TF-Gavage">Tube feed gavage</option>
+            <option value="TF-Drip">Tube feed drip</option>
+            <option value="SF-Bag">Bag for SF</option>
+          </select>
+        </div>
+      </div>
+      <div id="line2-total" style="margin-top:8px;font-size:13px;font-weight:600;color:#b86522"></div>
+      <!-- Time picker for 4/6 meals line 2 -->
+      <div id="line2-timepicker" style="display:none"></div>
+    </div>
+
+    <div class="divider">คำสั่งพิเศษ</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <div class="checkbox-row"><input type="checkbox" id="chk-mouthcare" onchange="toggleMouthCare(this.checked)"><label for="chk-mouthcare">Mouth care ด้วยนมแม่ 0.2 ml</label></div>
+        <select id="mouthcare-freq" style="margin-top:8px;display:none">
+          <option value="q3h">q 3 h (default อายุ ≤7 วัน)</option>
+          <option value="q6h">q 6 h</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="checkbox-row"><input type="checkbox" id="chk-breastfeed"><label for="chk-breastfeed">Breast feeding</label></div>
+      </div>
+      <div class="form-group">
+        <label>จำกัดนมแม่ (มื้อ/วัน)</label>
+        <input type="number" id="limit-breastmilk" min="0" max="12" placeholder="ไม่จำกัด">
+      </div>
+      <div class="form-group">
+        <label>หมายเหตุพิเศษ</label>
+        <input type="text" id="order-note" placeholder="ระบุถ้ามี">
+      </div>
+    </div>
+    <div class="form-grid col1" style="margin-top:14px">
+      <div class="form-group">
+        <label>รหัสบุคลากร 6 หลัก (ผู้คีย์คำสั่ง) <span class="req">*</span></label>
+        <input type="text" id="order-staffid" maxlength="6" placeholder="XXXXXX" style="max-width:200px">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveOrder()">💾 บันทึกคำสั่งนม</button>
+      <button class="btn btn-ghost" onclick="resetOrderForm()">↺ ล้างฟอร์ม</button>
+    </div>
+  </div>
+
+  <!-- today orders -->
+  <div class="card">
+    <div class="card-title">📄 คำสั่งนมวันนี้</div>
+    <div id="order-today-list"><div style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีคำสั่ง</div></div>
+    <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="renderTodayOrders()">🔄 รีเฟรช</button></div>
+  </div>
+</div>
+
+<!-- ══ VERIFY ══ -->
+<div class="pane" id="pane-verify">
+  <div class="card">
+    <div class="card-title">✅ ทวนสอบคำสั่งนม — Incharge Nurse</div>
+    <div class="alert alert-info">📌 ตรวจสอบแต่ละรายการ กด "รับคำสั่ง" หากถูกต้อง หรือ "ทบทวน" หากพบข้อผิดพลาด</div>
+    <div class="form-group" style="margin-bottom:14px;max-width:220px">
+      <label>รหัสบุคลากร Incharge Nurse <span class="req">*</span></label>
+      <input type="text" id="verify-staffid" maxlength="6" placeholder="XXXXXX">
+    </div>
+    <!-- ── #4: show full data, #5: edit/delete from verify ── -->
+    <div id="verify-list"><div style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</div></div>
+    <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="renderVerifyList()">🔄 รีเฟรช</button></div>
+  </div>
+</div>
+
+<!-- ══ MILK CARD ══ -->
+<div class="pane" id="pane-milkcard">
+  <div class="card no-print">
+    <div class="card-title">🏷️ พิมพ์บัตรนม + QR Code</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>เลือกผู้ป่วย</label>
+        <select id="mc-patient">
+          <option value="">— เลือกผู้ป่วย —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>วันที่</label>
+        <input type="date" id="mc-date">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateMilkCards()">🏷️ สร้างบัตรนม</button>
+      <button class="btn btn-amber no-print" onclick="window.print()">🖨️ พิมพ์บัตรนม (A4)</button>
+    </div>
+  </div>
+  <div id="milkcards-output" style="display:none">
+    <div class="card no-print"><div class="alert alert-success" style="margin:0">✅ บัตรนมสร้างสำเร็จ — กด 🖨️ พิมพ์บัตรนม เพื่อพิมพ์</div></div>
+    <div class="milk-cards-grid" id="milkcards-grid"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- Delete modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-title">🗑️ ยืนยันการลบผู้ป่วย</div>
+    <div class="form-group"><label>เหตุผล <span class="req">*</span></label>
+      <select id="del-reason"><option value="ย้ายแผนก">ย้ายแผนก</option><option value="จำหน่าย">จำหน่าย</option><option value="เสียชีวิต">เสียชีวิต</option><option value="อื่นๆ">อื่นๆ</option></select>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>รหัสบุคลากร <span class="req">*</span></label>
+      <input type="text" id="del-staffid" maxlength="6" placeholder="XXXXXX">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="confirmDelete()">🗑️ ยืนยันลบ</button>
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Order Modal -->
+<div class="modal-overlay" id="editOrderModal">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-title">✏️ แก้ไขคำสั่งนม</div>
+    <input type="hidden" id="edit-orderid">
+    <input type="hidden" id="edit-lineidx">
+    <div class="form-group" style="margin-bottom:12px">
+      <label>สูตรนม (เต็ม)</label>
+      <select id="edit-formula"><option value="">—</option></select>
+    </div>
+    <div class="form-grid col3">
+      <div class="form-group"><label>ปริมาณ (ml)</label><input type="number" id="edit-volume"></div>
+      <div class="form-group"><label>มื้อ/วัน</label>
+        <select id="edit-feeds">
+          <option value="4">4 มื้อ</option><option value="6">6 มื้อ</option>
+          <option value="8">8 มื้อ</option><option value="12">12 มื้อ</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Route</label>
+        <select id="edit-route">
+          <option value="Bottle">Bottle</option><option value="Cup">Cup</option>
+          <option value="TF-Gavage">TF-Gavage</option><option value="TF-Drip">TF-Drip</option><option value="SF-Bag">SF-Bag</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>หมายเหตุ</label><input type="text" id="edit-note"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEditOrder()">💾 บันทึกการแก้ไข</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ════════════ SCRIPT ════════════ -->
+<script>
+const GAS_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+
+// ── State ──────────────────────────────────────────
+var patients = [];
+var orders = []; // each order: { orderGroupId, hn, fullName, bedNo, orderDate, lines:[{milkType,formula,volume,feeds,route,totalPerBottle}], mouthCare, mouthCareFreq, breastFeeding, limitBM, note, orderedBy, status }
+var pendingDeleteHN = null;
+var line2Active = false;
+
+// ── Formula options ──────────────────────────────────
+var FORMULAS = [
+  {g:'NPO', opts:['NPO/งดน้ำงดอาหาร']},
+  {g:'นมแม่ / DBM', opts:[
+    'นมแม่ (20 kcal/oz)',
+    'นมแม่/DBM (20 kcal/oz)',
+    'นมแม่/DBM (20 kcal/oz) 27 ml + Con. PF1 (2 kcal/mL) 3 ml (24 kcal/oz)',
+    'นมแม่/DBM (20 kcal/oz) 28.5 ml + Conc. PF1 (2kcal/ml) 1.5 ml (22 kcal/oz)',
+    'นมแม่/DBM (20 kcal/oz) 24.5 ml + Conc. PF1 5.5 ml (27.3kcal/oz)',
+    'นมแม่/DBM (20kcal/oz) 27 ml + Con. PF1 (2kcal/mL) 3 ml + MCT oil 0.5 mL/oz (28 kcal/oz)',
+    'DBM (20kcal/oz)',
+    'DBM (20kcal/oz) 27 ml + Con. PF1 (2 kcal/mL) 3 mL (24 kcal/oz)',
+    'นมแม่/DBM (20kcal/oz) 24.5 ml + Con. PF1 (2 kcal/mL) 5.5 mL (27.3 kcal/oz)',
+    'เติม นมแม่/DBM (20 kcal/Oz) 3 ml ใน SF x 8 feeds',
+    'นมแม่ (20 kcal/oz.) รับมื้อ 9 น.'
+  ]},
+  {g:'นมผสม (Formula)', opts:[
+    '/ Infant formula (IF) (20 kcal/oz)',
+    '/ Premature formula (PF1) (24 kcal/oz)',
+    '/ PF1 (24 kcal/oz) + MCT oil 0.5 mL/oz at ward (28 kcal/oz)',
+    '/ PF2 (22 kcal/oz)',
+    '/ NAN LF (20 kcal/oz)',
+    '/ Nutramigen (20 kcal/oz)',
+    '/ Infatrini (30 kcal/oz)',
+    '/ S26 gold pro HA'
+  ]},
+  {g:'Special Feeding (SF)', opts:[
+    'Infatrini (30 kcal/oz) x 4 มื้อ (6,9,15,12,18,24u) / PF1 (24 kcal/oz) x 4 มื้อ (9,15)',
+    'Infant formula(20 Kcal/oz) / PF2(24Kcal/oz) (PF2 มื้อ 12,18 น.)',
+    'Nutramigen x 6 มื้อ, PF2(24kcal/oz) x 2 มื้อ (12,18น.)',
+    '/ Premature formula (PF1) (24 kcal/oz)/เริ่มนม Infatrini (30 kcal/oz) มื้อ 9 น. 23/04/2569',
+    '/Infatrini (30kcal/oz)/PF2 (22 kcal/oz) (มื้อ 6, 9 น.)',
+    '/Infant formula (20 kcal/oz)(S26 gold pro HA)',
+    '/S26 gold pro HA'
+  ]}
+];
+
+function buildFormulaOptions(selId) {
+  var sel = document.getElementById(selId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— เลือกสูตรนม —</option>';
+  FORMULAS.forEach(function(g) {
+    var og = document.createElement('optgroup');
+    og.label = g.g;
+    g.opts.forEach(function(o) {
+      var op = document.createElement('option');
+      op.value = o; op.textContent = o;
+      og.appendChild(op);
+    });
+    sel.appendChild(og);
+  });
+}
+
+// ── Persist ──────────────────────────────────────────
+function persist() {
+  try {
+    localStorage.setItem('milkOrders_v2', JSON.stringify(orders));
+    localStorage.setItem('milkPatients_v2', JSON.stringify(patients));
+  } catch(e){}
+}
+function loadPersisted() {
+  try {
+    var o = localStorage.getItem('milkOrders_v2');
+    var p = localStorage.getItem('milkPatients_v2');
+    if (o) orders = JSON.parse(o);
+    if (p) patients = JSON.parse(p);
+  } catch(e){}
+}
+
+// ── GAS ──────────────────────────────────────────────
+function gasGet(params) {
+  var url = GAS_URL + '?' + new URLSearchParams(params).toString();
+  return fetch(url).then(function(r){ return r.json(); }).catch(function(){ return {ok:false}; });
+}
+
+// ── Toast ─────────────────────────────────────────────
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'error' ? 'var(--red)' : type === 'success' ? 'var(--green)' : 'var(--gray-800)';
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 3500);
+}
+
+// ── Nav ───────────────────────────────────────────────
+function showPane(name) {
+  document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('pane-' + name).classList.add('active');
+  var btn = document.querySelector('[data-pane="' + name + '"]');
+  if (btn) btn.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'register') renderPatientTable(patients);
+  if (name === 'order') { populateOrderPatients(); renderTodayOrders(); }
+  if (name === 'verify') renderVerifyList();
+  if (name === 'milkcard') populateMCPatients();
+}
+
+// ── Age ───────────────────────────────────────────────
+function calcAgeText(dob, btime) {
+  if (!dob) return '—';
+  var birth = new Date(dob + (btime ? 'T' + btime : 'T00:00'));
+  var now = new Date();
+  var ms = now - birth;
+  if (ms < 0) return 'วันเกิดในอนาคต';
+  var hrs = Math.floor(ms / 3600000);
+  var days = Math.floor(hrs / 24);
+  var mos = Math.floor(days / 30.44);
+  var yrs = Math.floor(days / 365.25);
+  if (hrs < 48) return hrs + ' ชั่วโมง';
+  if (days < 30) return days + ' วัน';
+  if (mos < 12) return mos + ' เดือน ' + (days - Math.floor(mos * 30.44)) + ' วัน';
+  return yrs + ' ปี ' + (mos - yrs * 12) + ' เดือน';
+}
+function calcAge() {
+  var dob = document.getElementById('reg-dob').value;
+  var bt = document.getElementById('reg-btime').value;
+  document.getElementById('age-display').textContent = calcAgeText(dob, bt);
+  if (dob) {
+    var days = Math.floor((Date.now() - new Date(dob)) / 86400000);
+    var mf = document.getElementById('mouthcare-freq');
+    if (mf) mf.value = days <= 7 ? 'q3h' : 'q6h';
+  }
+}
+setInterval(function(){
+  var dob = document.getElementById('reg-dob').value;
+  if (dob) document.getElementById('age-display').textContent = calcAgeText(dob, document.getElementById('reg-btime').value);
+}, 60000);
+
+// ── Patients ──────────────────────────────────────────
+function checkHN(hn) {
+  var el = document.getElementById('reg-hn-alert');
+  var ex = patients.find(function(p){ return p.HN === hn; });
+  el.innerHTML = ex ? '<div class="alert alert-warning" style="margin-top:8px">⚠️ HN นี้มีในระบบแล้ว (' + ex.FullName + ', ' + ex.BedNo + ') — บันทึกจะอัปเดตข้อมูลแพ้ยา/อาหาร</div>' : '';
+}
+function savePatient() {
+  var hn = document.getElementById('reg-hn').value.trim();
+  var bed = document.getElementById('reg-bed').value;
+  var name = document.getElementById('reg-name').value.trim();
+  var dob = document.getElementById('reg-dob').value;
+  var btime = document.getElementById('reg-btime').value;
+  var religion = document.getElementById('reg-religion').value;
+  var allergy = document.getElementById('reg-allergy').value.trim() || 'NKA';
+  var staffid = document.getElementById('reg-staffid').value.trim();
+  if (!hn || !bed || !name || !dob || !staffid) { toast('❌ กรุณากรอกข้อมูลที่จำเป็นให้ครบ','error'); return; }
+  if (staffid.length !== 6) { toast('❌ รหัสบุคลากร 6 หลัก','error'); return; }
+  var idx = patients.findIndex(function(p){ return p.HN === hn; });
+  if (idx >= 0) {
+    patients[idx].Allergy = allergy; patients[idx].BedNo = bed;
+    toast('✅ อัปเดตข้อมูลแล้ว','success');
+  } else {
+    patients.push({ HN:hn, BedNo:bed, FullName:name, DOB:dob, BirthTime:btime, Religion:religion, Allergy:allergy });
+    toast('✅ บันทึกลงทะเบียนแล้ว','success');
+  }
+  persist();
+  renderPatientTable(patients);
+  gasGet({ action:'savePatient', hn:hn, bedNo:bed, fullName:name, dob:dob, birthTime:btime, religion:religion, allergy:allergy, registeredBy:staffid });
+  resetRegForm();
+}
+function renderPatientTable(data) {
+  var tbody = document.getElementById('patient-table');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีผู้ป่วย</td></tr>'; return; }
+  tbody.innerHTML = data.map(function(p){
+    return '<tr><td><b>' + p.HN + '</b></td><td class="td-name">' + p.FullName + '</td><td>' + p.BedNo + '</td><td>' + calcAgeText(p.DOB,p.BirthTime) + '</td><td>' + (p.Religion||'—') + '</td><td style="color:' + (p.Allergy !== 'NKA' ? 'var(--red)':'var(--green)') + '">' + (p.Allergy||'NKA') + '</td><td><button class="btn btn-ghost btn-sm" onclick="openDeleteModal(\'' + p.HN + '\')">🗑️</button></td></tr>';
+  }).join('');
+}
+function filterPatients(q) {
+  var filt = patients.filter(function(p){ return p.HN.toLowerCase().includes(q.toLowerCase()) || p.FullName.toLowerCase().includes(q.toLowerCase()); });
+  renderPatientTable(filt);
+}
+function resetRegForm() {
+  ['reg-hn','reg-name','reg-btime','reg-staffid'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('reg-bed').value = '';
+  document.getElementById('reg-dob').value = '';
+  document.getElementById('reg-allergy').value = 'NKA';
+  document.getElementById('reg-religion').value = 'พุทธ';
+  document.getElementById('age-display').textContent = '— กรุณาเลือกวันเกิด —';
+  document.getElementById('reg-hn-alert').innerHTML = '';
+}
+function openDeleteModal(hn) { pendingDeleteHN = hn; document.getElementById('deleteModal').classList.add('open'); }
+function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); pendingDeleteHN = null; }
+function confirmDelete() {
+  var reason = document.getElementById('del-reason').value;
+  var staffid = document.getElementById('del-staffid').value.trim();
+  if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากร 6 หลัก','error'); return; }
+  patients = patients.filter(function(p){ return p.HN !== pendingDeleteHN; });
+  persist(); renderPatientTable(patients);
+  gasGet({ action:'deletePatient', hn:pendingDeleteHN, reason:reason, deletedBy:staffid });
+  toast('✅ ลบ HN ' + pendingDeleteHN + ' เหตุผล: ' + reason,'success');
+  closeDeleteModal();
+}
+
+// ── #2: Order with 2 lines ────────────────────────────
+function selectMilkLine(lineNum, type, btn) {
+  var grp = btn.closest('.milk-type-group') || btn.parentNode;
+  grp.querySelectorAll('.milk-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  document.getElementById('line' + lineNum + '-milktype').value = type;
+  var fg = document.getElementById('line' + lineNum + '-formula-grp');
+  fg.style.display = (type !== 'NPO') ? 'block' : 'none';
+}
+function toggleLine2() {
+  line2Active = true;
+  document.getElementById('line2-block').style.display = 'block';
+  document.getElementById('line2-toggle').style.display = 'none';
+}
+function removeLine2() {
+  line2Active = false;
+  document.getElementById('line2-block').style.display = 'none';
+  document.getElementById('line2-toggle').style.display = 'block';
+  document.getElementById('line2-milktype').value = '';
+  document.getElementById('line2-formula').value = '';
+  document.getElementById('line2-volume').value = '';
+  document.getElementById('line2-feeds').value = '';
+  document.getElementById('line2-route').value = '';
+  document.getElementById('line2-formula-grp').style.display = 'none';
+  document.querySelectorAll('#line2-block .milk-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+  customTimes[2] = null;
+  var tp = document.getElementById('line2-timepicker'); if(tp){tp.style.display='none';tp.innerHTML='';}
+}
+function calcTotal(lineNum) {
+  var vol = parseFloat(document.getElementById('line' + lineNum + '-volume').value) || 0;
+  var route = document.getElementById('line' + lineNum + '-route').value;
+  var el = document.getElementById('line' + lineNum + '-total');
+  if (!vol) { el.textContent = ''; return; }
+  if (route === 'Bottle' || route === 'Cup') {
+    var tot = Math.ceil(vol * 1.2 / 5) * 5;
+    el.textContent = '📦 รวม ' + vol + ' ml + 20% = ' + tot + ' ml/ขวด (ตัวเลขลงท้าย 0 หรือ 5)';
+  } else {
+    el.textContent = '📦 ปริมาณ ' + vol + ' ml/มื้อ';
+  }
+}
+function populateOrderPatients() {
+  var sel = document.getElementById('order-patient');
+  sel.innerHTML = '<option value="">— เลือกผู้ป่วย —</option>';
+  patients.forEach(function(p){ sel.innerHTML += '<option value="' + p.HN + '">' + p.HN + ' — ' + p.FullName + ' (' + p.BedNo + ')</option>'; });
+}
+function onPatientSelect(hn) {
+  var p = patients.find(function(x){ return x.HN === hn; });
+  var box = document.getElementById('order-patient-info');
+  if (!p) { box.style.display = 'none'; return; }
+  var age = calcAgeText(p.DOB, p.BirthTime);
+  var days = p.DOB ? Math.floor((Date.now() - new Date(p.DOB)) / 86400000) : 99;
+  document.getElementById('order-patient-detail').innerHTML = '<b>' + p.FullName + '</b> | HN: ' + p.HN + ' | เตียง: ' + p.BedNo + ' | อายุ: ' + age + ' | แพ้: ' + (p.Allergy||'NKA');
+  box.style.display = 'flex';
+  document.getElementById('mouthcare-freq').value = days <= 7 ? 'q3h' : 'q6h';
+}
+function toggleMouthCare(checked) { document.getElementById('mouthcare-freq').style.display = checked ? 'block' : 'none'; }
+function saveOrder() {
+  var patHN = document.getElementById('order-patient').value;
+  var mt1 = document.getElementById('line1-milktype').value;
+  var formula1 = document.getElementById('line1-formula').value;
+  var vol1 = document.getElementById('line1-volume').value;
+  var feeds1 = document.getElementById('line1-feeds').value;
+  var route1 = document.getElementById('line1-route').value;
+  var staffid = document.getElementById('order-staffid').value.trim();
+  if (!patHN) { toast('❌ เลือกผู้ป่วยก่อน','error'); return; }
+  if (!mt1) { toast('❌ เลือกชนิดนมอย่างน้อย 1 รายการ','error'); return; }
+  if (!vol1 || !feeds1 || !route1) { toast('❌ กรอกข้อมูล ปริมาณ/มื้อ/Route ให้ครบ','error'); return; }
+  if (!staffid || staffid.length !== 6) { toast('❌ รหัสบุคลากร 6 หลัก','error'); return; }
+  var pat = patients.find(function(p){ return p.HN === patHN; });
+  var lines = [];
+  // Line 1
+  var r1 = route1 === 'Bottle' || route1 === 'Cup' ? Math.ceil(parseFloat(vol1)*1.2/5)*5 : null;
+  var t1 = getLineTimes(1, parseInt(feeds1));
+  lines.push({ milkType: mt1, formula: formula1, volume: vol1, feeds: feeds1, route: route1, totalPerBottle: r1, customTimes: t1 });
+  // Line 2
+  if (line2Active) {
+    var mt2 = document.getElementById('line2-milktype').value;
+    var f2 = document.getElementById('line2-formula').value;
+    var v2 = document.getElementById('line2-volume').value;
+    var fd2 = document.getElementById('line2-feeds').value;
+    var rt2 = document.getElementById('line2-route').value;
+    if (mt2 && v2 && fd2 && rt2) {
+      var r2 = rt2 === 'Bottle' || rt2 === 'Cup' ? Math.ceil(parseFloat(v2)*1.2/5)*5 : null;
+      var t2 = getLineTimes(2, parseInt(fd2));
+      lines.push({ milkType: mt2, formula: f2, volume: v2, feeds: fd2, route: rt2, totalPerBottle: r2, customTimes: t2 });
+    }
+  }
+  var mouthCare = document.getElementById('chk-mouthcare').checked;
+  var breastFeeding = document.getElementById('chk-breastfeed').checked;
+  var today = new Date().toISOString().slice(0,10);
+  var newOrder = {
+    orderGroupId: 'ORD-' + Date.now(),
+    hn: patHN, fullName: pat ? pat.FullName : '', bedNo: pat ? pat.BedNo : '',
+    orderDate: today, lines: lines,
+    mouthCare: mouthCare ? 'Y' : 'N',
+    mouthCareFreq: document.getElementById('mouthcare-freq').value,
+    breastFeeding: breastFeeding ? 'Y' : 'N',
+    limitBM: document.getElementById('limit-breastmilk').value,
+    note: document.getElementById('order-note').value,
+    orderedBy: staffid, status: 'PENDING'
+  };
+  orders.push(newOrder);
+  persist();
+  renderTodayOrders();
+  updateDashboardStats();
+  toast('✅ บันทึกคำสั่งนมแล้ว รอ Incharge Nurse ทวนสอบ','success');
+  resetOrderForm();
+}
+function resetOrderForm() {
+  document.getElementById('order-patient').value = '';
+  document.getElementById('order-patient-info').style.display = 'none';
+  ['line1-milktype','line1-formula','line1-volume','line1-feeds','line1-route'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('line1-formula-grp').style.display = 'none';
+  document.getElementById('line1-total').textContent = '';
+  document.querySelectorAll('#pane-order .milk-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+  removeLine2();
+  document.getElementById('chk-mouthcare').checked = false;
+  document.getElementById('chk-breastfeed').checked = false;
+  document.getElementById('mouthcare-freq').style.display = 'none';
+  document.getElementById('limit-breastmilk').value = '';
+  document.getElementById('order-note').value = '';
+  document.getElementById('order-staffid').value = '';
+  // Reset time pickers
+  customTimes = { 1: null, 2: null };
+  ['line1-timepicker','line2-timepicker'].forEach(function(id){ var el = document.getElementById(id); if(el){el.style.display='none';el.innerHTML='';} });
+}
+
+// ── #1, #3: Render today orders with full text ────────
+function renderTodayOrders() {
+  var today = new Date().toISOString().slice(0,10);
+  var todayO = orders.filter(function(o){ return o.orderDate === today; });
+  var el = document.getElementById('order-today-list');
+  if (!todayO.length) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีคำสั่งวันนี้</div>'; return; }
+  el.innerHTML = todayO.map(function(o){
+    var linesHTML = o.lines.map(function(l, i){
+      return '<div class="order-line"><span class="order-line-tag">รายการ ' + (i+1) + '</span>' +
+        '<span style="flex:1"><b>' + l.milkType + '</b> — ' + (l.formula||'—') + '</span>' +
+        '<span style="min-width:60px">' + l.volume + ' ml</span>' +
+        '<span style="min-width:60px">' + l.feeds + ' มื้อ</span>' +
+        '<span style="min-width:70px">' + l.route + '</span>' +
+        statusBadge(o.status) + '</div>';
+    }).join('');
+    return '<div class="order-block"><div class="order-block-header"><span>👶 ' + o.fullName + ' | HN: ' + o.hn + ' | ' + o.bedNo + '</span><span style="font-size:12px;font-weight:400">สั่งโดย: ' + o.orderedBy + '</span></div>' + linesHTML + '</div>';
+  }).join('');
+}
+
+// ── Dashboard ─────────────────────────────────────────
+function loadDashboard() {
+  updateDashboardStats();
+  var today = new Date().toISOString().slice(0,10);
+  var todayO = orders.filter(function(o){ return o.orderDate === today; });
+  var tbody = document.getElementById('dashboard-orders');
+  if (!todayO.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีคำสั่งนมวันนี้</td></tr>'; return; }
+  tbody.innerHTML = todayO.map(function(o){
+    var formulaDisplay = o.lines.map(function(l){ return (l.formula||l.milkType); }).join(' / ');
+    var feedsDisplay = o.lines.map(function(l){ return l.feeds; }).join('+');
+    return '<tr><td><b>' + o.hn + '</b></td><td class="td-name">' + o.fullName + '</td><td>' + o.bedNo + '</td><td class="td-formula">' + formulaDisplay + '</td><td>' + feedsDisplay + ' มื้อ</td><td>' + statusBadge(o.status) + '</td></tr>';
+  }).join('');
+}
+function updateDashboardStats() {
+  document.getElementById('stat-patients').textContent = patients.length;
+  var today = new Date().toISOString().slice(0,10);
+  var todayO = orders.filter(function(o){ return o.orderDate === today; });
+  document.getElementById('stat-pending').textContent = todayO.filter(function(o){ return o.status === 'PENDING'; }).length;
+  document.getElementById('stat-approved').textContent = todayO.filter(function(o){ return o.status === 'APPROVED'; }).length;
+  document.getElementById('stat-today').textContent = todayO.length;
+}
+
+// ── #4, #5: Verify with full data + edit/delete ───────
+function renderVerifyList() {
+  var today = new Date().toISOString().slice(0,10);
+  var pending = orders.filter(function(o){ return o.orderDate === today && (o.status === 'PENDING' || o.status === 'REVIEW'); });
+  var el = document.getElementById('verify-list');
+  if (!pending.length) { el.innerHTML = '<div style="text-align:center;color:var(--green);padding:20px;font-weight:600">✅ ไม่มีคำสั่งรอทวนสอบ</div>'; return; }
+  el.innerHTML = pending.map(function(o){
+    var linesHTML = o.lines.map(function(l, i){
+      return '<div style="display:flex;flex-wrap:wrap;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100);align-items:center">' +
+        '<span class="order-line-tag">รายการ ' + (i+1) + '</span>' +
+        '<span style="min-width:90px"><b>' + l.milkType + '</b></span>' +
+        '<span class="td-formula" style="flex:1;min-width:180px">' + (l.formula||'—') + '</span>' +
+        '<span style="min-width:55px">' + l.volume + ' ml</span>' +
+        '<span style="min-width:60px">' + l.feeds + ' มื้อ</span>' +
+        '<span style="min-width:80px">' + l.route + '</span>' +
+        (l.totalPerBottle ? '<span style="color:var(--amber);font-weight:600;font-size:12px">รวม ' + l.totalPerBottle + ' ml/ขวด</span>' : '') +
+        '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\'' + o.orderGroupId + '\',' + i + ')">✏️ แก้ไข</button>' +
+        '</div>';
+    }).join('');
+    return '<div class="order-block" style="margin-bottom:12px">' +
+      '<div class="order-block-header"><span>👶 ' + o.fullName + ' | HN: ' + o.hn + ' | ' + o.bedNo + '</span>' + statusBadge(o.status) + '</div>' +
+      '<div style="padding:0 14px">' + linesHTML +
+      (o.mouthCare === 'Y' ? '<div style="padding:8px 0;font-size:13px;color:var(--teal-dark)">💧 Mouth care 0.2 ml ' + (o.mouthCareFreq||'q3h') + '</div>' : '') +
+      (o.breastFeeding === 'Y' ? '<div style="padding:4px 0;font-size:13px;color:var(--teal-dark)">🤱 Breast feeding</div>' : '') +
+      (o.note ? '<div style="padding:4px 0;font-size:13px;color:var(--gray-600)">📝 ' + o.note + '</div>' : '') +
+      '<div style="display:flex;gap:8px;padding:10px 0">' +
+      '<button class="btn btn-success btn-sm" onclick="doVerify(\'' + o.orderGroupId + '\',\'APPROVED\')">✅ รับคำสั่ง</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="doVerify(\'' + o.orderGroupId + '\',\'REVIEW\')">↩ ทบทวน</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="deleteOrder(\'' + o.orderGroupId + '\')">🗑️ ลบคำสั่ง</button>' +
+      '</div></div></div>';
+  }).join('');
+}
+function doVerify(orderId, status) {
+  var staffid = document.getElementById('verify-staffid').value.trim();
+  if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากร Incharge Nurse ก่อน','error'); return; }
+  var idx = orders.findIndex(function(o){ return o.orderGroupId === orderId; });
+  if (idx >= 0) { orders[idx].status = status; orders[idx].verifiedBy = staffid; }
+  persist(); renderVerifyList(); updateDashboardStats();
+  toast(status === 'APPROVED' ? '✅ รับคำสั่งเรียบร้อย' : '↩ ส่งกลับทบทวน', status === 'APPROVED' ? 'success' : '');
+  gasGet({ action:'verifyOrder', orderId:orderId, status:status, verifiedBy:staffid });
+}
+function deleteOrder(orderId) {
+  if (!confirm('ยืนยันลบคำสั่งนี้?')) return;
+  orders = orders.filter(function(o){ return o.orderGroupId !== orderId; });
+  persist(); renderVerifyList(); renderTodayOrders(); updateDashboardStats();
+  toast('🗑️ ลบคำสั่งแล้ว');
+}
+
+// ── #5: Edit order modal ──────────────────────────────
+function openEditModal(orderId, lineIdx) {
+  var o = orders.find(function(x){ return x.orderGroupId === orderId; });
+  if (!o) return;
+  var l = o.lines[lineIdx];
+  document.getElementById('edit-orderid').value = orderId;
+  document.getElementById('edit-lineidx').value = lineIdx;
+  buildFormulaOptions('edit-formula');
+  document.getElementById('edit-formula').value = l.formula || '';
+  document.getElementById('edit-volume').value = l.volume;
+  document.getElementById('edit-feeds').value = l.feeds;
+  document.getElementById('edit-route').value = l.route;
+  document.getElementById('edit-note').value = o.note || '';
+  document.getElementById('editOrderModal').classList.add('open');
+}
+function closeEditModal() { document.getElementById('editOrderModal').classList.remove('open'); }
+function saveEditOrder() {
+  var orderId = document.getElementById('edit-orderid').value;
+  var lineIdx = parseInt(document.getElementById('edit-lineidx').value);
+  var idx = orders.findIndex(function(o){ return o.orderGroupId === orderId; });
+  if (idx < 0) return;
+  var formula = document.getElementById('edit-formula').value;
+  var volume = document.getElementById('edit-volume').value;
+  var feeds = document.getElementById('edit-feeds').value;
+  var route = document.getElementById('edit-route').value;
+  var note = document.getElementById('edit-note').value;
+  var totalPerBottle = (route === 'Bottle' || route === 'Cup') ? Math.ceil(parseFloat(volume)*1.2/5)*5 : null;
+  orders[idx].lines[lineIdx].formula = formula;
+  orders[idx].lines[lineIdx].volume = volume;
+  orders[idx].lines[lineIdx].feeds = feeds;
+  orders[idx].lines[lineIdx].route = route;
+  orders[idx].lines[lineIdx].totalPerBottle = totalPerBottle;
+  orders[idx].note = note;
+  orders[idx].status = 'PENDING'; // reset to pending after edit
+  persist(); closeEditModal(); renderVerifyList();
+  toast('✅ แก้ไขคำสั่งแล้ว สถานะรีเซ็ตเป็น รอทวนสอบ','success');
+}
+
+// ── Time picker ───────────────────────────────────────
+// All possible feed times pool (every hour, 00:00–23:00)
+var ALL_TIMES_24 = [];
+(function(){
+  for (var h = 0; h < 24; h++) ALL_TIMES_24.push((h < 10 ? '0' : '') + h + ':00');
+})();
+
+// Default grids (start 12:00)
+var FEED_TIMES_DEFAULT = {
+  '4':  ['12:00','18:00','00:00','06:00'],
+  '6':  ['12:00','16:00','20:00','00:00','04:00','08:00'],
+  '8':  ['12:00','15:00','18:00','21:00','00:00','03:00','06:00','09:00'],
+  '12': ['12:00','14:00','16:00','18:00','20:00','22:00','00:00','02:00','04:00','06:00','08:00','10:00']
+};
+
+// Store custom selections: customTimes[lineNum] = ['HH:00',...]
+var customTimes = { 1: null, 2: null };
+
+function onFeedsChange(lineNum) {
+  var feeds = document.getElementById('line' + lineNum + '-feeds').value;
+  var box = document.getElementById('line' + lineNum + '-timepicker');
+  customTimes[lineNum] = null; // reset on change
+  if (feeds === '4' || feeds === '6') {
+    renderTimePicker(lineNum, parseInt(feeds));
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
+
+function renderTimePicker(lineNum, feedCount) {
+  var box = document.getElementById('line' + lineNum + '-timepicker');
+  var defaultSel = FEED_TIMES_DEFAULT[String(feedCount)];
+  var color = lineNum === 1 ? 'var(--teal-dark)' : '#b86522';
+  var borderColor = lineNum === 1 ? 'var(--teal-mid)' : '#f5c9a3';
+  var bg = lineNum === 1 ? 'var(--teal-light)' : 'var(--amber-light)';
+
+  var chipsHTML = ALL_TIMES_24.map(function(t) {
+    var isSel = defaultSel.indexOf(t) >= 0;
+    return '<div class="time-chip' + (isSel ? ' sel' : '') + '" onclick="toggleTimeChip(this,' + lineNum + ',' + feedCount + ')" data-time="' + t + '">' + t + ' น.</div>';
+  }).join('');
+
+  box.innerHTML = '<div class="time-picker-box" style="background:' + bg + ';border-color:' + borderColor + '">' +
+    '<div class="time-picker-title" style="color:' + color + '">⏰ เลือกเวลาให้นม <span id="line' + lineNum + '-time-count" style="font-size:11px;background:rgba(0,0,0,.08);border-radius:10px;padding:1px 8px">เลือกแล้ว ' + feedCount + '/' + feedCount + '</span>' +
+    '&nbsp;<span style="font-size:11px;font-weight:400;color:var(--gray-600)">(ต้องเลือกให้ครบ ' + feedCount + ' ช่วงเวลา)</span>' +
+    '<button type="button" onclick="resetTimePicker(' + lineNum + ',' + feedCount + ')" style="margin-left:auto;border:none;background:none;cursor:pointer;font-size:12px;color:var(--gray-600)">↺ คืนค่าเริ่มต้น</button></div>' +
+    '<div class="time-grid">' + chipsHTML + '</div>' +
+    '</div>';
+
+  // Init customTimes from default
+  customTimes[lineNum] = defaultSel.slice();
+}
+
+function toggleTimeChip(chip, lineNum, feedCount) {
+  var t = chip.getAttribute('data-time');
+  var arr = customTimes[lineNum] || [];
+  var idx = arr.indexOf(t);
+  if (idx >= 0) {
+    // deselect — only if > 1 selected
+    if (arr.length <= 1) { toast('❌ ต้องเลือกอย่างน้อย 1 เวลา','error'); return; }
+    arr.splice(idx, 1);
+    chip.classList.remove('sel');
+  } else {
+    if (arr.length >= feedCount) {
+      toast('❌ เลือกได้ ' + feedCount + ' ช่วงเวลาเท่านั้น (ยกเลิกเลือกก่อน)','error'); return;
+    }
+    arr.push(t);
+    chip.classList.add('sel');
+  }
+  customTimes[lineNum] = arr;
+  // Sort times chronologically (treat as clock starting 00:00)
+  customTimes[lineNum].sort(function(a,b){ return a.localeCompare(b); });
+  var countEl = document.getElementById('line' + lineNum + '-time-count');
+  if (countEl) countEl.textContent = 'เลือกแล้ว ' + arr.length + '/' + feedCount;
+}
+
+function resetTimePicker(lineNum, feedCount) {
+  customTimes[lineNum] = FEED_TIMES_DEFAULT[String(feedCount)].slice();
+  renderTimePicker(lineNum, feedCount);
+}
+
+function getLineTimes(lineNum, feeds) {
+  if ((feeds === 4 || feeds === 6) && customTimes[lineNum] && customTimes[lineNum].length === feeds) {
+    // Sort: start from earliest after 12:00 (wrap midnight)
+    var arr = customTimes[lineNum].slice().sort(function(a,b){ return a.localeCompare(b); });
+    return arr;
+  }
+  return FEED_TIMES_DEFAULT[String(feeds)] || FEED_TIMES_DEFAULT['8'];
+}
+
+// ── Milk Cards starting 12:00 ─────────────────────────
+function populateMCPatients() {
+  var sel = document.getElementById('mc-patient');
+  sel.innerHTML = '<option value="">— เลือกผู้ป่วย —</option>';
+  patients.forEach(function(p){ sel.innerHTML += '<option value="' + p.HN + '">' + p.HN + ' — ' + p.FullName + ' (' + p.BedNo + ')</option>'; });
+}
+function formatDateTH(d) {
+  var months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  var dt = new Date(d); return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + (dt.getFullYear()+543);
+}
+function generateMilkCards() {
+  var hn = document.getElementById('mc-patient').value;
+  var dateVal = document.getElementById('mc-date').value || new Date().toISOString().slice(0,10);
+  if (!hn) { toast('❌ เลือกผู้ป่วยก่อน','error'); return; }
+  var pat = patients.find(function(p){ return p.HN === hn; });
+  var patOrders = orders.filter(function(o){ return o.hn === hn && (o.status === 'APPROVED' || o.status === 'PRODUCED'); });
+  if (!patOrders.length) { toast('❌ ไม่มีคำสั่งที่ผ่านการอนุมัติ (APPROVED)','error'); return; }
+  var grid = document.getElementById('milkcards-grid');
+  grid.innerHTML = '';
+  var cardCount = 0;
+  patOrders.forEach(function(order){
+    order.lines.forEach(function(line, li){
+      var feeds = parseInt(line.feeds) || 8;
+      // Use saved custom times if present on this line; else default
+      var savedTimes = line.customTimes || null;
+      var times = savedTimes || FEED_TIMES_DEFAULT[String(feeds)] || FEED_TIMES_DEFAULT['8'];
+      var age = calcAgeText(pat ? pat.DOB : '', pat ? pat.BirthTime : '');
+      var dateDisp = formatDateTH(dateVal);
+      times.forEach(function(time, idx){
+        cardCount++;
+        var cardId = 'cqr-' + cardCount;
+        var qrData = 'A00C' + hn + '|' + order.orderGroupId + '|L' + (li+1) + '|' + dateVal + '|' + time;
+        var noteHTML = line.totalPerBottle ? '<div class="milk-card-footer" style="color:var(--amber);font-weight:700">📦 รวม ' + line.totalPerBottle + ' ml/ขวด</div>' : '';
+        var mcHTML = (order.mouthCare === 'Y' && li === 0) ? '<div class="milk-card-footer">💧 Mouth care 0.2 ml ' + (order.mouthCareFreq||'q3h') + '</div>' : '';
+        var lineTag = order.lines.length > 1 ? ' <span style="background:var(--amber);color:white;border-radius:4px;padding:1px 6px;font-size:10px">รายการ '+(li+1)+'</span>' : '';
+        grid.innerHTML += '<div class="milk-card"><div class="milk-card-header"><span>🍼 บัตรนม มื้อที่ ' + (idx+1) + '/' + feeds + lineTag + '</span><span>' + time + ' น.</span></div><div class="milk-card-body"><div class="milk-card-info"><div class="row"><span class="lbl">HN:</span><span class="val"><b>' + hn + '</b></span></div><div class="row"><span class="lbl">ชื่อ:</span><span class="val">' + (pat?pat.FullName:'—') + '</span></div><div class="row"><span class="lbl">อายุ:</span><span class="val">' + age + '</span></div><div class="row"><span class="lbl">เตียง:</span><span class="val">' + (pat?pat.BedNo:'—') + '</span></div><div class="row"><span class="lbl">วันที่:</span><span class="val">' + dateDisp + '</span></div><div class="row"><span class="lbl">ชนิด:</span><span class="val"><b>' + line.milkType + '</b></span></div><div class="row"><span class="lbl">สูตร:</span><span class="val">' + (line.formula||'—') + '</span></div><div class="row"><span class="lbl">ปริมาณ:</span><span class="val"><b>' + line.volume + ' ml</b></span></div><div class="row"><span class="lbl">Route:</span><span class="val">' + line.route + '</span></div></div><div class="milk-card-qr"><div id="' + cardId + '" style="width:72px;height:72px"></div><span style="font-size:9px;color:var(--gray-400)">Scan ก่อน Feed</span></div></div>' + noteHTML + mcHTML + '</div>';
+        setTimeout(function(id, data){ return function(){
+          var el = document.getElementById(id);
+          if (el) { el.innerHTML=''; try { new QRCode(el,{text:data,width:72,height:72,correctLevel:QRCode.CorrectLevel.M}); } catch(e){el.innerHTML='<div style="font-size:9px;padding:4px;text-align:center">QR</div>';} }
+        }; }(cardId, qrData), 120 + cardCount*10);
+      });
+    });
+  });
+  document.getElementById('milkcards-output').style.display = 'block';
+  toast('✅ สร้างบัตรนม ' + cardCount + ' ใบ','success');
+}
+function statusBadge(status) {
+  var map = { PENDING:['badge-pending','⏳ รอทวนสอบ'], APPROVED:['badge-approved','✅ อนุมัติ'], REVIEW:['badge-review','↩ ทบทวน'], PRODUCED:['badge-produced','🏭 ผลิตแล้ว'] };
+  var v = map[status] || ['badge-pending', status];
+  return '<span class="badge ' + v[0] + '">' + v[1] + '</span>';
+}
+
+// ── Init ──────────────────────────────────────────────
+document.getElementById('mc-date').value = new Date().toISOString().slice(0,10);
+buildFormulaOptions('line1-formula');
+buildFormulaOptions('line2-formula');
+loadPersisted();
+loadDashboard();
+renderPatientTable(patients);
+</script>
+</body>
+</html>
