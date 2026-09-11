@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Neonatal Milk Safety System — NICU</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 :root {
@@ -183,6 +184,8 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
   <button class="nav-btn" onclick="showPane('order')" data-pane="order">🩺 คำสั่งนม</button>
   <button class="nav-btn" onclick="showPane('verify')" data-pane="verify">✅ ทวนสอบคำสั่ง</button>
   <button class="nav-btn" onclick="showPane('milkcard')" data-pane="milkcard">🏷️ บัตรนม + QR</button>
+  <button class="nav-btn" onclick="showPane('transport')" data-pane="transport">🚚 ขนส่ง</button>
+  <button class="nav-btn" onclick="showPane('scanfeed')" data-pane="scanfeed">📷 Scan+Feed</button>
 </nav>
 
 <main class="main">
@@ -205,10 +208,10 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
       <div class="step-item done"><div class="step-circle">3</div>ทวนสอบ</div>
       <div class="step-sep done"></div>
       <div class="step-item done"><div class="step-circle">4</div>บัตรนม+QR</div>
-      <div class="step-sep"></div>
-      <div class="step-item"><div class="step-circle">5</div>ขนส่ง</div>
-      <div class="step-sep"></div>
-      <div class="step-item"><div class="step-circle">6</div>Scan+Feed</div>
+      <div class="step-sep done"></div>
+      <div class="step-item done" style="cursor:pointer" onclick="showPane('transport')"><div class="step-circle">5</div>ขนส่ง</div>
+      <div class="step-sep done"></div>
+      <div class="step-item done" style="cursor:pointer" onclick="showPane('scanfeed')"><div class="step-circle">6</div>Scan+Feed</div>
     </div>
   </div>
   <div class="card">
@@ -220,6 +223,29 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
       </table>
     </div>
     <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 รีเฟรช</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📅 ดูคำสั่งนมย้อนหลัง (ทุกผู้ป่วย)</div>
+    <div class="form-grid col3" style="align-items:end;margin-bottom:14px">
+      <div class="form-group">
+        <label>เลือกวันที่</label>
+        <input type="date" id="ov-date">
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" onclick="loadOverviewByDate()">🔍 ดูคำสั่งวันที่เลือก</button>
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <div id="ov-summary" style="font-size:13px;color:var(--gray-600);padding-top:9px"></div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>HN</th><th>ชื่อผู้ป่วย</th><th>เตียง</th><th>สูตรนม</th><th>มื้อ/วัน</th><th>สถานะ</th><th>สั่งโดย</th></tr></thead>
+        <tbody id="overview-orders"><tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:20px">เลือกวันที่แล้วกด "ดูคำสั่งวันที่เลือก"</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -500,6 +526,101 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
   </div>
 </div>
 
+<!-- ══ TRANSPORT (#5) ══ -->
+<div class="pane" id="pane-transport">
+  <div class="card">
+    <div class="card-title">🚚 รับนมจากห้องนม (ขนส่งเข้า NICU)</div>
+    <div class="alert alert-info">📦 รายการด้านล่างคือคำสั่งที่ทวนสอบแล้ว (อนุมัติ/ผลิตแล้ว) ของวันนี้ ที่ยังไม่ได้กดรับเข้าหอผู้ป่วย</div>
+    <div class="form-grid col3">
+      <div class="form-group">
+        <label>รหัสบุคลากรผู้รับนม 6 หลัก <span class="req">*</span></label>
+        <input type="text" id="transport-staffid" maxlength="6" placeholder="รหัส 6 หลัก">
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>HN</th><th>ชื่อผู้ป่วย</th><th>เตียง</th><th>สูตรนม</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+        <tbody id="transport-list"><tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="loadTransportList()">🔄 รีเฟรช</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">✅ รับนมแล้ววันนี้</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>HN</th><th>ชื่อผู้ป่วย</th><th>เตียง</th><th>รับโดย</th><th>เวลารับ</th></tr></thead>
+        <tbody id="transport-received-list"><tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มี</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCAN + FEED (#6) ══ -->
+<div class="pane" id="pane-scanfeed">
+  <div class="card">
+    <div class="card-title">📷 สแกน QR ก่อนป้อนนม</div>
+    <div class="alert alert-warning">⚠️ ต้องดูข้อมูลผู้ป่วยที่ขึ้นหลังสแกนให้ตรงกับตัวเด็กที่เตียงจริงทุกครั้ง ก่อนกดยืนยันป้อนนม</div>
+    <div id="scanner-box" style="max-width:360px;margin:0 auto 14px"></div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-primary" id="scan-start-btn" onclick="startScanner()">📷 เปิดกล้องสแกน</button>
+      <button class="btn btn-ghost" id="scan-stop-btn" onclick="stopScanner()" style="display:none">⏹️ ปิดกล้อง</button>
+    </div>
+    <div class="divider">หรือเลือกด้วยมือ (กล้องใช้ไม่ได้)</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>เลือกผู้ป่วย</label>
+        <select id="sf-patient" onchange="populateManualFeedTimes()">
+          <option value="">— เลือกผู้ป่วย —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>เลือกมื้อนม</label>
+        <select id="sf-feedtime">
+          <option value="">— เลือกผู้ป่วยก่อน —</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn btn-outline" onclick="loadManualFeedCard()">🔍 ดูข้อมูลมื้อนี้</button></div>
+  </div>
+
+  <div class="card" id="feed-match-card" style="display:none">
+    <div class="card-title">👶 ยืนยันตัวผู้ป่วยก่อนป้อนนม</div>
+    <div id="feed-allergy-alert"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>HN</label><div class="age-display" id="fm-hn"></div></div>
+      <div class="form-group"><label>ชื่อ-สกุล</label><div class="age-display" id="fm-name"></div></div>
+      <div class="form-group"><label>เตียง</label><div class="age-display" id="fm-bed"></div></div>
+      <div class="form-group"><label>อายุ</label><div class="age-display" id="fm-age"></div></div>
+      <div class="form-group"><label>ชนิดนม/สูตร</label><div class="age-display" id="fm-formula"></div></div>
+      <div class="form-group"><label>ปริมาณ / Route</label><div class="age-display" id="fm-volume"></div></div>
+      <div class="form-group full"><label>มื้อ / วันที่กำหนด</label><div class="age-display" id="fm-time"></div></div>
+    </div>
+    <div id="feed-duplicate-alert"></div>
+    <div class="form-grid col3" style="margin-top:10px">
+      <div class="form-group">
+        <label>รหัสบุคลากรผู้ป้อนนม 6 หลัก <span class="req">*</span></label>
+        <input type="text" id="feed-staffid" maxlength="6" placeholder="รหัส 6 หลัก">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-success" id="feed-confirm-btn" onclick="confirmFeed(false)">✅ ตรงกับผู้ป่วย — ป้อนนมแล้ว</button>
+      <button class="btn btn-ghost" onclick="cancelFeedMatch()">ยกเลิก</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 ประวัติการป้อนนมวันนี้</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>เวลา</th><th>HN</th><th>ชื่อผู้ป่วย</th><th>มื้อกำหนด</th><th>สูตรนม</th><th>ป้อนโดย</th></tr></thead>
+        <tbody id="feedlog-list"><tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="loadFeedLog()">🔄 รีเฟรช</button></div>
+  </div>
+</div>
+
 </main>
 
 <!-- Delete modal -->
@@ -556,7 +677,7 @@ tbody td.td-name{max-width:200px;word-break:break-word;white-space:normal}
 
 <!-- ════════════ SCRIPT ════════════ -->
 <script>
-var GAS_URL = "https://script.google.com/macros/s/AKfycbwRBlKtmxlHlwFbvl9UjqUJzd4K58SBe4B_3k1ogTdHF-5F4Bryn6KF--haV_WSETNZ/exec";
+var GAS_URL = "https://script.google.com/macros/s/AKfycbwMKKsEBMtZe9jqsFCick0BownsOYPgIRV6mVEd3jkcTqovbrdYPjiPBKdrpS_pL3se2w/exec";
 
 // ── State ──────────────────────────────────────────
 var patients = [];
@@ -665,7 +786,9 @@ function syncFromSheets() {
             limitBM:       o.LimitBM||o.limitBM||'',
             note:          o.Note||o.note||'',
             orderedBy:     o.OrderedBy||o.orderedBy||'',
-            status:        o.Status||o.status||'PENDING'
+            status:        o.Status||o.status||'PENDING',
+            receivedBy:    o.ReceivedBy||o.receivedBy||'',
+            receivedAt:    o.ReceivedAt||o.receivedAt||''
           };
         });
       persist();
@@ -678,6 +801,8 @@ function syncFromSheets() {
     populateMCPatients();
     loadDashboard();
     renderTodayOrders();
+    renderTransportList();
+    populateSFPatients();
   }).catch(function(err) {
     setSyncUI('error', 'ออฟไลน์ (ใช้ local)');
     setTimeout(function(){ setSyncUI('idle',''); }, 5000);
@@ -774,6 +899,9 @@ function showPane(name) {
   if (name === 'order') { populateOrderPatients(); renderTodayOrders(); }
   if (name === 'verify') renderVerifyList();
   if (name === 'milkcard') populateMCPatients();
+  if (name === 'transport') renderTransportList();
+  if (name === 'scanfeed') { populateSFPatients(); loadFeedLog(); }
+  if (name !== 'scanfeed') stopScanner();
 }
 
 // ── Age ───────────────────────────────────────────────
@@ -1066,6 +1194,52 @@ function updateDashboardStats() {
   document.getElementById('stat-today').textContent = todayO.length;
 }
 
+// ── ดูคำสั่งนมย้อนหลังของทุกผู้ป่วยตามวันที่เลือก ─────
+function loadOverviewByDate() {
+  var dateVal = document.getElementById('ov-date').value;
+  if (!dateVal) { toast('❌ เลือกวันที่ก่อน','error'); return; }
+  var tbody = document.getElementById('overview-orders');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</td></tr>';
+  document.getElementById('ov-summary').textContent = '';
+  Promise.all([
+    gasGet({ action: 'getOrders', date: dateVal }),
+    gasGet({ action: 'getOrderLines' })
+  ]).then(function(results) {
+    var oRes = results[0], lRes = results[1];
+    if (!oRes.ok) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">⚠️ ' + (oRes.error || 'โหลดไม่สำเร็จ') + '</td></tr>';
+      return;
+    }
+    var lineMap = {};
+    if (lRes.ok && lRes.data) {
+      lRes.data.forEach(function(l) {
+        var gid = l.OrderGroupId || l.orderGroupId;
+        if (!lineMap[gid]) lineMap[gid] = [];
+        lineMap[gid].push({ milkType: l.MilkType||l.milkType||'', formula: l.Formula||l.formula||'', feeds: l.Feeds||l.feeds||'' });
+      });
+    }
+    var rows = (oRes.data || []).filter(function(o) { return (o.Status||o.status) !== 'DELETED'; });
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:20px">ไม่มีคำสั่งนมในวันที่เลือก</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function(o) {
+      var gid = o.OrderGroupId || o.orderGroupId;
+      var lines = lineMap[gid] || [];
+      var formulaDisplay = lines.map(function(l){ return l.formula || l.milkType; }).join(' / ') || '—';
+      var feedsDisplay = lines.map(function(l){ return l.feeds; }).join('+') || '—';
+      var status = o.Status || o.status || 'PENDING';
+      return '<tr><td><b>' + (o.HN||o.hn) + '</b></td><td class="td-name">' + (o.FullName||o.fullName) + '</td><td>' + (o.BedNo||o.bedNo) + '</td><td class="td-formula">' + formulaDisplay + '</td><td>' + feedsDisplay + ' มื้อ</td><td>' + statusBadge(status) + '</td><td>' + (o.OrderedBy||o.orderedBy||'—') + '</td></tr>';
+    }).join('');
+    var counts = { PENDING:0, APPROVED:0, REVIEW:0, PRODUCED:0 };
+    rows.forEach(function(o) { var s = o.Status||o.status||'PENDING'; if (counts[s] !== undefined) counts[s]++; });
+    document.getElementById('ov-summary').textContent =
+      'รวม ' + rows.length + ' คำสั่ง — รอทวนสอบ ' + counts.PENDING + ' / อนุมัติ ' + counts.APPROVED + ' / ผลิตแล้ว ' + counts.PRODUCED + ' / ทบทวน ' + counts.REVIEW;
+  }).catch(function() {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">⚠️ โหลดไม่สำเร็จ ลองใหม่อีกครั้ง</td></tr>';
+  });
+}
+
 // ── #4, #5: Verify with full data + edit/delete ───────
 function renderVerifyList() {
   var today = new Date().toISOString().slice(0,10);
@@ -1320,8 +1494,219 @@ function statusBadge(status) {
   return '<span class="badge ' + v[0] + '">' + v[1] + '</span>';
 }
 
+// ══════════════ #5 ขนส่ง — รับนมจากห้องนม ══════════════
+function renderTransportList() {
+  var today = new Date().toISOString().slice(0,10);
+  var pending = orders.filter(function(o){
+    return o.orderDate === today && (o.status === 'APPROVED' || o.status === 'PRODUCED') && !o.receivedAt;
+  });
+  var received = orders.filter(function(o){ return o.orderDate === today && !!o.receivedAt; });
+
+  var tbody = document.getElementById('transport-list');
+  if (!pending.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--green);padding:20px;font-weight:600">✅ รับนมครบทุกรายการแล้ว</td></tr>';
+  } else {
+    tbody.innerHTML = pending.map(function(o){
+      var formulaDisplay = o.lines.map(function(l){ return l.formula || l.milkType; }).join(' / ');
+      return '<tr><td><b>' + o.hn + '</b></td><td class="td-name">' + o.fullName + '</td><td>' + o.bedNo + '</td><td class="td-formula">' + formulaDisplay + '</td><td>' + statusBadge(o.status) + '</td>' +
+        '<td><button class="btn btn-success btn-sm" onclick="receiveThisOrder(\'' + o.orderGroupId + '\')">📥 รับนมแล้ว</button></td></tr>';
+    }).join('');
+  }
+
+  var rtbody = document.getElementById('transport-received-list');
+  if (!received.length) {
+    rtbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มี</td></tr>';
+  } else {
+    rtbody.innerHTML = received.map(function(o){
+      return '<tr><td><b>' + o.hn + '</b></td><td class="td-name">' + o.fullName + '</td><td>' + o.bedNo + '</td><td>' + o.receivedBy + '</td><td>' + o.receivedAt + '</td></tr>';
+    }).join('');
+  }
+}
+function loadTransportList() { syncFromSheets(); }
+function receiveThisOrder(orderId) {
+  var staffid = document.getElementById('transport-staffid').value.trim();
+  if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากร 6 หลักก่อน','error'); return; }
+  var idx = orders.findIndex(function(o){ return o.orderGroupId === orderId; });
+  if (idx >= 0) { orders[idx].receivedBy = staffid; orders[idx].receivedAt = new Date().toLocaleString('th-TH'); }
+  persist(); renderTransportList();
+  toast('✅ รับนมแล้ว','success');
+  setSyncUI('syncing','บันทึก...');
+  gasGet({ action:'receiveOrder', orderId:orderId, receivedBy:staffid })
+    .then(function(r){ setSyncUI(r.ok?'ok':'error', r.ok?'✅ บันทึกลง Sheets':'⚠️ '+r.error); setTimeout(function(){setSyncUI('idle','');},3000); });
+}
+
+// ══════════════ #6 Scan+Feed ══════════════
+function populateSFPatients() {
+  var sel = document.getElementById('sf-patient');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— เลือกผู้ป่วย —</option>';
+  patients.forEach(function(p){ sel.innerHTML += '<option value="' + p.HN + '">' + p.HN + ' — ' + p.FullName + ' (' + p.BedNo + ')</option>'; });
+}
+// รวบรวม "มื้อนม" ทั้งหมดของผู้ป่วยคนหนึ่งจากคำสั่งวันนี้ที่อนุมัติ/ผลิตแล้ว
+function getPatientFeedCards(hn) {
+  var todayVal = new Date().toISOString().slice(0,10);
+  var list = [];
+  orders.filter(function(o){ return o.hn === hn && o.orderDate === todayVal && (o.status === 'APPROVED' || o.status === 'PRODUCED'); })
+    .forEach(function(order){
+      order.lines.forEach(function(line, li){
+        var feeds = parseInt(line.feeds) || 8;
+        var times = (line.customTimes && line.customTimes.length) ? line.customTimes : (FEED_TIMES_DEFAULT[String(feeds)] || FEED_TIMES_DEFAULT['8']);
+        times.forEach(function(time, idx){
+          var hourNum = parseInt(time.split(':')[0], 10);
+          var cardDateISO = hourNum < 12 ? addDaysISO(todayVal, 1) : todayVal;
+          list.push({
+            orderGroupId: order.orderGroupId, lineIndex: li + 1,
+            scheduledDate: cardDateISO, scheduledTime: time,
+            milkType: line.milkType, formula: line.formula, volume: line.volume, route: line.route,
+            feedIdx: idx + 1, feedTotal: feeds, hn: hn
+          });
+        });
+      });
+    });
+  return list;
+}
+function populateManualFeedTimes() {
+  var hn = document.getElementById('sf-patient').value;
+  var sel = document.getElementById('sf-feedtime');
+  if (!hn) { sel.innerHTML = '<option value="">— เลือกผู้ป่วยก่อน —</option>'; return; }
+  var cards = getPatientFeedCards(hn);
+  if (!cards.length) { sel.innerHTML = '<option value="">— ไม่มีคำสั่งที่อนุมัติวันนี้ —</option>'; sel.removeAttribute('data-cards'); return; }
+  sel.innerHTML = '<option value="">— เลือกมื้อนม —</option>' + cards.map(function(c, i){
+    var label = 'มื้อ ' + c.feedIdx + '/' + c.feedTotal + ' — ' + c.scheduledTime + ' น. (' + formatDateTH(c.scheduledDate) + ') — ' + (c.formula || c.milkType);
+    return '<option value="' + i + '">' + label + '</option>';
+  }).join('');
+  sel.setAttribute('data-cards', JSON.stringify(cards));
+}
+function loadManualFeedCard() {
+  var sel = document.getElementById('sf-feedtime');
+  if (sel.value === '') { toast('❌ เลือกมื้อนมก่อน','error'); return; }
+  var cards = JSON.parse(sel.getAttribute('data-cards') || '[]');
+  var card = cards[parseInt(sel.value, 10)];
+  if (!card) return;
+  showFeedMatch(card);
+}
+
+// ── กล้องสแกน QR (html5-qrcode) ─────────────────────
+var html5QrScanner = null;
+function startScanner() {
+  document.getElementById('scan-start-btn').style.display = 'none';
+  document.getElementById('scan-stop-btn').style.display = 'inline-flex';
+  html5QrScanner = new Html5Qrcode('scanner-box');
+  Html5Qrcode.getCameras().then(function(devices) {
+    var camId = (devices && devices.length)
+      ? (devices.find(function(d){ return /back|rear|environment/i.test(d.label); }) || devices[devices.length - 1]).id
+      : null;
+    var config = { fps: 10, qrbox: 240 };
+    var p = camId ? html5QrScanner.start(camId, config, onScanDecoded) : html5QrScanner.start({ facingMode: 'environment' }, config, onScanDecoded);
+    p.catch(function(){ toast('❌ เปิดกล้องไม่ได้ ใช้วิธีเลือกด้วยมือแทน','error'); stopScanner(); });
+  }).catch(function(){ toast('❌ ไม่พบกล้อง ใช้วิธีเลือกด้วยมือแทน','error'); stopScanner(); });
+}
+function stopScanner() {
+  document.getElementById('scan-start-btn').style.display = 'inline-flex';
+  document.getElementById('scan-stop-btn').style.display = 'none';
+  if (html5QrScanner) {
+    html5QrScanner.stop().then(function(){ html5QrScanner.clear(); html5QrScanner = null; }).catch(function(){ html5QrScanner = null; });
+  }
+}
+function onScanDecoded(decodedText) {
+  // รูปแบบ: A00C{hn}|{orderGroupId}|L{lineIndex}|{date}|{time}
+  var parts = decodedText.split('|');
+  if (parts.length !== 5 || parts[0].indexOf('A00C') !== 0) { toast('❌ QR นี้ไม่ใช่บัตรนมของระบบนี้','error'); return; }
+  var hn = parts[0].replace('A00C','');
+  var orderGroupId = parts[1];
+  var lineIndex = parseInt(parts[2].replace('L',''), 10);
+  var scheduledDate = parts[3];
+  var scheduledTime = parts[4];
+  stopScanner();
+  var order = orders.find(function(o){ return o.orderGroupId === orderGroupId; });
+  if (!order) { toast('❌ ไม่พบคำสั่งนี้ในระบบวันนี้ — ลองรีเฟรชหรือเลือกด้วยมือ','error'); return; }
+  var line = order.lines[lineIndex - 1];
+  if (!line) { toast('❌ ไม่พบรายการนมนี้','error'); return; }
+  var feeds = parseInt(line.feeds) || 8;
+  var times = (line.customTimes && line.customTimes.length) ? line.customTimes : (FEED_TIMES_DEFAULT[String(feeds)] || FEED_TIMES_DEFAULT['8']);
+  var feedIdx = times.indexOf(scheduledTime) + 1;
+  showFeedMatch({
+    orderGroupId: orderGroupId, lineIndex: lineIndex, scheduledDate: scheduledDate, scheduledTime: scheduledTime,
+    milkType: line.milkType, formula: line.formula, volume: line.volume, route: line.route,
+    feedIdx: feedIdx || 1, feedTotal: feeds, hn: hn
+  });
+}
+
+// ── การ์ดยืนยันตัวผู้ป่วย + บันทึกป้อนนม ─────────────
+var currentFeedCard = null;
+function showFeedMatch(card) {
+  currentFeedCard = card;
+  var pat = patients.find(function(p){ return p.HN === card.hn; });
+  document.getElementById('fm-hn').textContent = card.hn;
+  document.getElementById('fm-name').textContent = pat ? pat.FullName : '⚠️ ไม่พบชื่อในระบบ — ตรวจสอบก่อนป้อนนม';
+  document.getElementById('fm-bed').textContent = pat ? pat.BedNo : '—';
+  document.getElementById('fm-age').textContent = pat ? calcAgeText(pat.DOB, pat.BirthTime) : '—';
+  document.getElementById('fm-formula').textContent = (card.milkType || '') + ' — ' + (card.formula || '—');
+  document.getElementById('fm-volume').textContent = card.volume + ' ml / ' + card.route;
+  document.getElementById('fm-time').textContent = 'มื้อ ' + card.feedIdx + '/' + card.feedTotal + ' — ' + card.scheduledTime + ' น. (' + formatDateTH(card.scheduledDate) + ')';
+  var allergyBox = document.getElementById('feed-allergy-alert');
+  allergyBox.innerHTML = (pat && pat.Allergy && pat.Allergy !== 'NKA')
+    ? '<div class="alert alert-danger">🚨 ผู้ป่วยมีประวัติแพ้: <b>' + pat.Allergy + '</b> — ตรวจสอบก่อนป้อนนมทุกครั้ง</div>'
+    : '';
+  document.getElementById('feed-duplicate-alert').innerHTML = '';
+  document.getElementById('feed-staffid').value = '';
+  document.getElementById('feed-match-card').style.display = 'block';
+  document.getElementById('feed-match-card').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function cancelFeedMatch() {
+  currentFeedCard = null;
+  document.getElementById('feed-match-card').style.display = 'none';
+}
+function confirmFeed(force) {
+  if (!currentFeedCard) return;
+  var staffid = document.getElementById('feed-staffid').value.trim();
+  if (!staffid || staffid.length !== 6) { toast('❌ กรอกรหัสบุคลากร 6 หลักก่อน','error'); return; }
+  var c = currentFeedCard;
+  var btn = document.getElementById('feed-confirm-btn');
+  btn.disabled = true;
+  gasGet({
+    action: 'logFeed', orderId: c.orderGroupId, lineIndex: c.lineIndex, hn: c.hn,
+    scheduledDate: c.scheduledDate, scheduledTime: c.scheduledTime,
+    milkType: c.milkType, formula: c.formula, volume: c.volume, route: c.route,
+    fedBy: staffid, force: force ? '1' : '0'
+  }).then(function(r) {
+    btn.disabled = false;
+    if (r.ok) {
+      toast('✅ บันทึกป้อนนมแล้ว','success');
+      cancelFeedMatch();
+      loadFeedLog();
+    } else if (r.duplicate) {
+      document.getElementById('feed-duplicate-alert').innerHTML =
+        '<div class="alert alert-warning">⚠️ มื้อนี้บันทึกป้อนนมไปแล้วโดย ' + r.fedBy + ' เมื่อ ' + r.fedAt + '<br>' +
+        '<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="confirmFeed(true)">บันทึกซ้ำอีกครั้ง (ยืนยันว่าป้อนจริง)</button></div>';
+    } else {
+      toast('⚠️ ' + (r.error || 'บันทึกไม่สำเร็จ'), 'error');
+    }
+  });
+}
+function loadFeedLog() {
+  var tbody = document.getElementById('feedlog-list');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px">กำลังโหลด...</td></tr>';
+  gasGet({ action: 'getFeedLog' }).then(function(r) {
+    if (!r.ok || !r.data || !r.data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px">ยังไม่มีการป้อนนมวันนี้</td></tr>';
+      return;
+    }
+    tbody.innerHTML = r.data.map(function(f) {
+      var hn = f.HN || f.hn;
+      var pat = patients.find(function(p){ return p.HN === hn; });
+      return '<tr><td>' + (f.ScheduledTime || f.scheduledTime) + ' น.</td><td><b>' + hn + '</b></td><td class="td-name">' + (pat ? pat.FullName : '—') + '</td>' +
+        '<td>' + (f.ScheduledDate || f.scheduledDate) + '</td><td class="td-formula">' + (f.Formula || f.formula || f.MilkType || f.milkType || '—') + '</td><td>' + (f.FedBy || f.fedBy) + '</td></tr>';
+    }).join('');
+  }).catch(function() {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--red);padding:20px">⚠️ โหลดไม่สำเร็จ</td></tr>';
+  });
+}
+
 // ── Init ──────────────────────────────────────────────
 document.getElementById('mc-date').value = new Date().toISOString().slice(0,10);
+document.getElementById('ov-date').value = new Date().toISOString().slice(0,10);
 buildFormulaOptions('line1-formula');
 buildFormulaOptions('line2-formula');
 buildFormulaOptions('edit-formula');

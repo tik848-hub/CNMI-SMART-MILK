@@ -122,7 +122,7 @@ input:focus,select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 
 <div id="toast"></div>
 
 <script>
-var GAS_URL = "https://script.google.com/macros/s/AKfycbwRBlKtmxlHlwFbvl9UjqUJzd4K58SBe4B_3k1ogTdHF-5F4Bryn6KF--haV_WSETNZ/exec";
+var GAS_URL = "https://script.google.com/macros/s/AKfycbwMKKsEBMtZe9jqsFCick0BownsOYPgIRV6mVEd3jkcTqovbrdYPjiPBKdrpS_pL3se2w/exec";
 
 function getOrders() { try { return JSON.parse(localStorage.getItem('milkOrders_v2')||'[]'); } catch(e){ return []; } }
 function saveOrders(o) { try { localStorage.setItem('milkOrders_v2', JSON.stringify(o)); } catch(e){} }
