@@ -626,7 +626,10 @@ function syncFromSheets() {
     }
 
     // Orders — merge groups + lines
-    if (oRes.ok && oRes.data && oRes.data.length > 0) {
+    // หมายเหตุ: ตัด "&& oRes.data.length > 0" ออก เพื่อให้ข้อมูลจาก Sheets
+    // เขียนทับ cache เดิมเสมอ แม้วันนี้จะยังไม่มีคำสั่งเลยก็ตาม
+    // ไม่งั้นคำสั่ง/บัตรนมของวันก่อนจะค้างอยู่ใน localStorage ไม่มีวันหาย
+    if (oRes.ok && oRes.data) {
       var lineMap = {};
       if (lRes.ok && lRes.data) {
         lRes.data.forEach(function(l) {
@@ -1267,12 +1270,18 @@ function formatDateTH(d) {
   var months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var dt = new Date(d); return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + (dt.getFullYear()+543);
 }
+// รอบวันเริ่ม 12:00 น. — เวลาที่ตกก่อน 12:00 (00:00–09:00) จึงนับเป็นของ "วันถัดไป"
+function addDaysISO(iso, days) {
+  var dt = new Date(iso);
+  dt.setDate(dt.getDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
 function generateMilkCards() {
   var hn = document.getElementById('mc-patient').value;
   var dateVal = document.getElementById('mc-date').value || new Date().toISOString().slice(0,10);
   if (!hn) { toast('❌ เลือกผู้ป่วยก่อน','error'); return; }
   var pat = patients.find(function(p){ return p.HN === hn; });
-  var patOrders = orders.filter(function(o){ return o.hn === hn && (o.status === 'APPROVED' || o.status === 'PRODUCED'); });
+  var patOrders = orders.filter(function(o){ return o.hn === hn && o.orderDate === dateVal && (o.status === 'APPROVED' || o.status === 'PRODUCED'); });
   if (!patOrders.length) { toast('❌ ไม่มีคำสั่งที่ผ่านการอนุมัติ (APPROVED)','error'); return; }
   var grid = document.getElementById('milkcards-grid');
   grid.innerHTML = '';
@@ -1284,11 +1293,13 @@ function generateMilkCards() {
       var savedTimes = line.customTimes || null;
       var times = savedTimes || FEED_TIMES_DEFAULT[String(feeds)] || FEED_TIMES_DEFAULT['8'];
       var age = calcAgeText(pat ? pat.DOB : '', pat ? pat.BirthTime : '');
-      var dateDisp = formatDateTH(dateVal);
       times.forEach(function(time, idx){
         cardCount++;
         var cardId = 'cqr-' + cardCount;
-        var qrData = 'A00C' + hn + '|' + order.orderGroupId + '|L' + (li+1) + '|' + dateVal + '|' + time;
+        var hourNum = parseInt(time.split(':')[0], 10);
+        var cardDateISO = hourNum < 12 ? addDaysISO(dateVal, 1) : dateVal; // ก่อน 12:00 น. = ของวันถัดไป
+        var dateDisp = formatDateTH(cardDateISO);
+        var qrData = 'A00C' + hn + '|' + order.orderGroupId + '|L' + (li+1) + '|' + cardDateISO + '|' + time;
         var noteHTML = line.totalPerBottle ? '<div class="milk-card-footer" style="color:var(--amber);font-weight:700">📦 รวม ' + line.totalPerBottle + ' ml/ขวด</div>' : '';
         var mcHTML = (order.mouthCare === 'Y' && li === 0) ? '<div class="milk-card-footer">💧 Mouth care 0.2 ml ' + (order.mouthCareFreq||'q3h') + '</div>' : '';
         var lineTag = order.lines.length > 1 ? ' <span style="background:var(--amber);color:white;border-radius:4px;padding:1px 6px;font-size:10px">รายการ '+(li+1)+'</span>' : '';
